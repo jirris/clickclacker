@@ -1,0 +1,14 @@
+[Unit]
+Description=ClickClack service for relay control
+
+[Service]
+User=pi
+Group=pi
+ExecStart=/usr/bin/python3 clickclack.py
+WorkingDirectory=/home/pi/clickclack
+Restart=always
+RestartSec=60
+
+[Install]
+Alias=clickclack
+WantedBy=multi-user.target
