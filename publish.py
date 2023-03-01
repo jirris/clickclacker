@@ -24,7 +24,7 @@ def htmlcreator(table):
         else:
             html = html + '<th>' + cell[8:10] + '.' + cell[5:7] + cell[10:] + '</th>'
         prevdate = dat
-    html = html + '</tr></thead><tbody><tr>'
+    html = html + '</tr></thead><tbody>'
 
     rownr = 0
 
@@ -32,6 +32,7 @@ def htmlcreator(table):
         if rownr == 0:
             rownr = rownr + 1
             continue
+        html = html + '<tr>'
         for cell in row:
             if "off " in cell:
                 html = html + '<td>' + cell + '</td>'
