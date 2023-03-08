@@ -17,6 +17,7 @@ Prequisites:
   - configparser
   - lxml (note in Rasbian you have to install this with apt-get install python3-lxml, this installs also bs4). 
   - nordpool, if you plan to use Nordpool script in tools instead of Entsoe.
+  - Flask & waitress, if you plan to use webeditor (small and bad), check readme.md in webedit folder
   
 Install with: pip3 install library  
   
@@ -68,6 +69,7 @@ tools/fmi_parser.py, for retrieving forecasts from FMI.fi (Finland).
 tools/price.py, for retrieving prices from open api (Finland).    
 tools/nord.py, for retrieving prices from Nordpool api, see script for configuring, relys on Nordpool library.  
 tools/spotprice, a Go implementation to retrieve spot prices from Ensto-e. (Europe). 
+tools/check_clickclack.sh, small script to check if clickclack service is running, use from crontab hourly or so
 
 data/schedule.csv and data/schedule.html, current schedules in CSV and HTML format for viewing.
 
@@ -79,6 +81,8 @@ Scripts/gpio.sh, tool for changing GPIO state for example to change relay status
   - off=bash scripts/gpio.sh 5 off, in devices.conf
 Scripts/shelly.py, for controlling Shelly relays (ShellyPy package needed, install with pip3 install shellypy)
 scripts/test.sh, for testing purposes, just prints text to log/test.log
+
+webedit, a small server for editing active hour online, refer to readme.md in folder
 
 ------TESTED WITH-----------
   

@@ -106,9 +106,13 @@ def errorhandler(msg, exp, code):
             if emailon == "y":
                 sendemail(msg, server, email, password)
             if consoleon == "y":
-                if str(exp) == "0":
+                if str(code) == "0":
                     exp = "Normal operation"
-                print(msg + ". Exception: " + str(exp))
+                    print(msg + ". " + exp)
+                elif str(code) == "1":
+                    print("Failure: " + msg + ". Exception: " + str(exp))
+                elif str(code) == "2":
+                    print("Critical error: " + msg + ". Exception: " + str(exp))
             if callmebotset == "y":
                 phone_number = (config["DEFAULT"]["phone_number"])
                 api_key = (config["DEFAULT"]["api_key"])

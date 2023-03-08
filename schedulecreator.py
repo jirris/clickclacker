@@ -6,12 +6,15 @@ import pickle
 import os
 import sys
 import static
+import time
 from datetime import datetime
+from datetime import timedelta
 from aux import settime
 from aux import errorhandler
 from aux import infohandler
 from aux import messagehandler
 from aux import sendhtml
+import publish
 
 abspath = os.path.abspath(__file__)
 dname = os.path.dirname(abspath)
@@ -21,8 +24,23 @@ config = configparser.ConfigParser()
 tempfile = configparser.ConfigParser()
 windfile = configparser.ConfigParser()
 
-# schedule1 = {}  # Today (for history)
+def fixeddate(device, day):
+    dates = config[device]["fixed_days_list"]
+    dates = dates.split(",")
 
+    if day == 1:
+        now = datetime.now().strftime("%a")
+    else:
+        now = (datetime.now() + timedelta(days=1)).strftime("%a")
+
+    now = now.lower()
+
+    dates = [d.lower() for d in dates]
+
+    if now in dates:
+        return 1
+    else:
+        return 0
 
 def tempcurve(device, day):  # Calculate needed hours based on the average temperature per day
     # Change to Kelvins
@@ -38,7 +56,7 @@ def tempcurve(device, day):  # Calculate needed hours based on the average tempe
         curveS = (max_hours - mid_hours) / (max_temp - mid_temp)  # Slope for above 0C
         temperatureTuple = averageT(device)
     except Exception as e:
-        aux.errorhandler("Configuration error", e, 1)
+        aux.errorhandler("Configuration error", e, 2)
         return 0
 
     if temperatureTuple is None:
@@ -70,7 +88,7 @@ def windcurve(device, day, temperature):  # Adds windchill factor by calculating
         wind_file = config["DEFAULT"]["wind_file"]
         cutoff_temp = int(config[device]["cutoff_chill"])
     except Exception as e:
-        aux.errorhandler("Configuration error", e, 1)
+        aux.errorhandler("Configuration error", e, 2)
         return 0
 
     if temperature is None:  # No average temperature got
@@ -94,7 +112,7 @@ def windcurve(device, day, temperature):  # Adds windchill factor by calculating
             windD = (windfile["wind"]["tomorrow_dir"])
             windS = float(windfile["wind"]["tomorrow_spd"])
     except Exception as e:
-        errorhandler("Wind file not found, default to no adjustment", e, 0)
+        errorhandler("Wind file not found, default to no adjustment", e, 1)
         return 0
     wind = 0
 
@@ -117,7 +135,7 @@ def windcurve(device, day, temperature):  # Adds windchill factor by calculating
             wind = int(config[device]["ne_chill"])
         chillfactor = windS/5 * wind
     except Exception as e:
-        aux.errorhandler("Configuration error", e, 1)
+        aux.errorhandler("Configuration error", e, 2)
         return 0
 
     if chillfactor < 0:
@@ -142,7 +160,7 @@ def averageT(device):
             today = today + windcurve(device, 0, today)
             tomorrow = tomorrow + windcurve(device, 1, tomorrow)
     except Exception as e:
-        errorhandler("Temperature file not found, default to no adjustment", e, 0)
+        errorhandler("Temperature file not found, default to no adjustment", e, 1)
         return None
     return today, tomorrow
 
@@ -150,17 +168,19 @@ def averageT(device):
 # Main
 def main():
     schedule1 = {}
+    emptyschedule = 1
+
     try:
         config.read('conf/devices.conf')
         tz = (int(config["DEFAULT"]["timezone"]))
     except Exception as e:
-        errorhandler("Config not found on scheduler", e, 0)
+        errorhandler("Config not found on scheduler", e, 2)
         sys.exit()
 
     if config["DEFAULT"]["fetch"] == "y":  # Run script to get new pricelist and weatherdata
         command = config["DEFAULT"]["fetch_command"]
         if not os.path.isfile(command):
-            errorhandler("Schedulecreator, script to run not found", command, 0)
+            errorhandler("Schedulecreator, script to run not found", command, 1)
         else:
             os.system(command)
 
@@ -175,9 +195,18 @@ def main():
                 weatheradjH_TD = int(config[device]["hours"])
                 weatheradjH_TM = int(config[device]["hours"])
             adj = 0
+
             if config.get(device, 'pricelimit', fallback="n") == "y":
                 aux.infohandler("Schedule for " + device + " will be price adjusted")
                 adj = 1
+
+            if config.get(device, 'fixed_days', fallback="n") == "y":
+                if fixeddate(device, 1) == 0:
+                    emptyschedule = weatheradjH_TD
+                    weatheradjH_TD = 0
+                if fixeddate(device, 2) == 0:
+                    emptyschedule = weatheradjH_TM
+                    weatheradjH_TM = 0
 
             if int(weatheradjH_TD) != 0:
                 onhours1 = (hours.hours(1, int(weatheradjH_TD), adj, device))  # Today
@@ -198,7 +227,7 @@ def main():
                     infohandler("------")
 
             if onhours1 == "error":
-                aux.errorhandler("Schedulecreator: No new price information got today", 0, 1)
+                aux.errorhandler("Schedulecreator: No new price information got today", 0, 0)
                 return "error"
             else:
                 for hour in onhours1:
@@ -207,7 +236,7 @@ def main():
                     if device not in schedule1[hour[0]]:
                         schedule1[hour[0]].append(device)
             if onhours2 == "error":
-                aux.errorhandler("Schedulecreator: No new price information got for tomorrow for " + device, 0, 1)
+                aux.errorhandler("Schedulecreator: No new price information got for tomorrow for " + device, 0, 0)
             else:
                 for hour in onhours2:
                     if hour[0] not in schedule1:
@@ -217,6 +246,19 @@ def main():
         else:
             staticTD = static.createtimetables(device, 0)
             staticTM = static.createtimetables(device, 1)
+
+            if config.get(device, 'fixed_days', fallback="n") == "y":
+                if fixeddate(device, 1) == 0:
+                    emptyschedule = staticTD
+                    staticTD = []
+                if fixeddate(device, 2) == 0:
+                    emptyschedule = staticTM
+                    staticTM = []
+
+            if staticTD == None:
+                staticTD = []
+            if staticTM  == None:
+                staticTM = []
 
             if config.get(device, 'pricelimit', fallback="n") == "y":
                 aux.infohandler("Schedule for " + device + " will be price adjusted")
@@ -280,7 +322,14 @@ def main():
             infohandler("------")
 
     if len(schedule1) < 1:
-        errorhandler("Schdedulecreator: Schedule empty after creation", 0, 0)
+        if len(emptyschedule) == 0:
+            errorhandler("Schdedulecreator: Schedule empty after creation", 0, 2)
+            sys.exit()
+        else:
+            now = datetime.now()
+            now = datetime(now.year, now.month, now.day)
+            now = time.mktime(now.timetuple())
+            schedule1[int(now)] = ""
 
     hrsched = ""
     price = "Unknown"
@@ -305,10 +354,9 @@ def main():
                 break
             else:
                 price = "Unknown"
+        if str(temp_schedule[key]):
+            hrsched = hrsched + (str(t) + "--> ON:\t" + str(temp_schedule[key]) + "  Price: " + str(price) + "\n")
 
-        hrsched = hrsched + (str(t) + "--> ON:\t" + str(temp_schedule[key]) + "  Price: " + str(price) + "\n")
-
-    import publish
     publish.csvcreator(temp_schedule, pricelist)
 
     if config.get('DEFAULT', 'html', fallback="n") == "y":
@@ -320,11 +368,22 @@ def main():
     try:
         if os.path.exists('data/schedule1.pkl'):
             os.remove('data/schedule1.pkl')
+        if os.path.exists('data/prices.pkl'):
+            os.remove('data/prices.pkl')
         with open('data/schedule1.pkl', 'wb') as f:  # Full schedule
             pickle.dump(temp_schedule, f)
             f.close()
+            f = open("data/origin", "w")
+            if emptyschedule != 0:
+                f.write("f")
+            else:
+                f.write("s")
+            f.close()
+        with open('data/prices.pkl', 'wb') as f:  # Pricelist
+            pickle.dump(pricelist, f)
+            f.close()
     except Exception as e:
-        errorhandler("Schedule file write failed", e, 0)
+        errorhandler("Schedule file write failed", e, 2)
 
 
 if __name__ == '__main__':

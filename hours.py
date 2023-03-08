@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup as bs
 import requests
 import configparser
 import os
+from aux import errorhandler
 
 abspath = os.path.abspath(__file__)
 dname = os.path.dirname(abspath)
@@ -26,9 +27,45 @@ try:
     tz = float(config["DEFAULT"]["timezone"])
 
 except Exception as e:
-    aux.errorhandler("Hours: Config not found", e, 1)
+    aux.errorhandler("Hours: Config not found", e, 2)
     exit()
 
+def priorities(table, device, nhours):
+    try:
+        priorityhours = config[device]["priority_hours"]
+    except KeyError as x:
+        errorhandler("Priority hours config not found for " + device, x, 0)
+        return "error", 0
+
+    priorityhours = priorityhours.split(",")
+    cleanhours = []
+    table2 = []
+
+    for digit in priorityhours:
+        try:
+            int(digit)
+            if int(digit) < 24 and int(digit) >= 0:
+                cleanhours.append(int(digit))
+        except ValueError as x:
+            errorhandler("Priority hour value error on " + device, x, 1)
+            continue
+
+    prioritytable = []
+
+    for key in table:
+        hour = int(datetime.datetime.fromtimestamp(key[0]).strftime('%H'))
+        if hour in cleanhours:
+            prioritytable.append(key)
+    prioritytable.sort(key=lambda x: x[1])  # Sort by price
+
+    for key in prioritytable:
+        if nhours == 0:
+            break
+        hour = int(datetime.datetime.fromtimestamp(key[0]).strftime('%H'))
+        if hour in cleanhours:
+            table2.append(key)
+            nhours = nhours - 1
+    return table2, nhours
 def priceLimit(table, device):
     a = 0
     result = []
@@ -65,7 +102,7 @@ def hoursJSON(day, hours, adj, device):
     except Exception as e:
         if int(day) == 2:
             return "error"
-        aux.errorhandler("Hours: An exception occurred ", str(e), 1)  # --> catastrofic fail
+        aux.errorhandler("Hours: An exception occurred ", str(e), 2)  # --> catastrofic fail
         return "error"
     table = []
 
@@ -103,6 +140,14 @@ def hoursJSON(day, hours, adj, device):
                     nhours = nhours - 1
                 count = 0
             count = count + 1
+
+    # Priority hours
+
+    if config.get(device, 'priority', fallback="n") == "y":
+        returnvalue = priorities(table, device, nhours)
+        if returnvalue[0] != "error":
+            table2 = returnvalue[0]
+            nhours = returnvalue[1]
 
     table.sort(key=lambda x: x[1])  # Sort by price
     for key in table:
@@ -183,7 +228,7 @@ def ehours(day, hours, adj, device):
             f.close()
             data = bs(xml.content, features="xml")
         except Exception as e:
-            aux.errorhandler("Hours: Couldn't connect to site", e, 1)
+            aux.errorhandler("Hours: Couldn't connect to site", e, 2)
             return "error"
 
     try:
@@ -212,7 +257,7 @@ def ehours(day, hours, adj, device):
                 hour = hour + 1
 
     except Exception as e:
-        aux.errorhandler("Hours: An exception occurred",e ,1)
+        aux.errorhandler("Hours: An exception occurred",e ,2)
         return "error"
 
     table2 = []
@@ -225,7 +270,7 @@ def ehours(day, hours, adj, device):
         try:
             diff = int(config[device]["forceh"])
         except Exception as e:
-            aux.errorhandler("Hours: An exception occurred", e, 1)
+            aux.errorhandler("Hours: Force configuration failure", e, 2)
             return "error"
 
         for extra in table:
@@ -237,6 +282,14 @@ def ehours(day, hours, adj, device):
             count = count + 1
 
     table.sort(key=lambda x: x[1])  # Sort by price
+
+    # Priority hours
+
+    if config.get(device, 'priority', fallback="n") == "y":
+        returnvalue = priorities(table, device, nhours)
+        if returnvalue[0] != "error":
+            table2 = returnvalue[0]
+            nhours = returnvalue[1]
 
     for key in table:  # Return requested amount
         if nhours == 0:

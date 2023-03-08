@@ -16,13 +16,14 @@ from aux import infohandler
 # All times handled in UTC!
 schedule1 = {}
 utime1 = []
-errorCode = 0
+errorcode = 0
 config = configparser.ConfigParser()
 currentchange = 30
 nextchange = 30
 devicestate = {}
 allOff = 0
 previousupdate = 0
+changeorigin = ""
 
 
 abspath = os.path.abspath(__file__)
@@ -35,7 +36,7 @@ try:
     tz = (int(config["DEFAULT"]["timezone"]))
     cron = config.get("DEFAULT", "cron", fallback="16")
 except Exception as e:
-    errorhandler("Config not found", e, 1)
+    errorhandler("Config not found", e, 2)
     exit()
 for device in config:
     if device != "DEFAULT":
@@ -44,57 +45,67 @@ for device in config:
 
 def reload():
     global schedule1
-    global utime1
-    utime1.clear()
-    schedule1.clear()
-    scheduleerr = 0
+    global changeorigin
+
     infohandler("Clickclack: Getting new schedule")
     scheduleerr = schedulecreator.main()
 
     if scheduleerr == "error":
         while scheduleerr == "error":
             errorhandler("Clickclack: Schedule could not be created, running backup setting and wait for hour", 0,
-                         0)  # --> Catastrofic fail
+                         2)  # --> Catastrofic fail
             controller.switch("backup", 0)
             time.sleep(3600)
             scheduleerr = schedulecreator.main()
+
+    schedule1.clear()
+
     try:
         with open('data/schedule1.pkl', 'rb') as f:
             schedule1 = pickle.load(f)
             f.close()
+        changeorigin = "r"
     except Exception as y:
-        errorhandler("Clickclack: Schedule file not found on reload, running backup setting and exiting", y, 0)
+        errorhandler("Clickclack: Schedule file not found on reload, running backup setting and exiting", y, 2)
         # --> Catastrofic fail
         controller.switch("backup", 0)
         sys.exit()
-    for utime in schedule1:
-        utime1.append(utime)
 
 
 def start():
-    global schedule1
+    global schedule1, errorcode
     global utime1
-    global errorCode
     global currentchange
     global nextchange
     global devicestate
     global config
     global allOff
     global previousupdate
+    global changeorigin
+    oldtime = 0
 
     # def inner function
     def init():
         global schedule1
         global utime1
-        global errorCode
+        global errorcode
         global currentchange
         global nextchange
         global devicestate
         global allOff
 
+        errorcode = 0
+        currentchange = 30
+        nextchange = 30
+        allOff = 0
+
+        utime1.clear()
+        for utime in schedule1:
+            utime1.append(utime)
+
         timenow = int(time.time())
         n = 0
-        while n < len(utime1):  # Set current setting on startup
+        while n != len(utime1):  # Set current setting on startup
             if not utime1[n] > timenow and (utime1[n] + 3600) > timenow:  # One hour setting
                 currentchange = int(utime1[n])
                 infohandler("Init. This Update --> Schedule: " + datetime.datetime.utcfromtimestamp(
@@ -104,11 +115,11 @@ def start():
                         infohandler("Switch on " + str(each))  # Set stage device was off
                         controller.switch(each, 1)
                         devicestate[each] = 1
-                    elif config.get(each, "repeat", fallback="y") == "y":  # Repeat requested
+                    elif devicestate[each] == 1 and config.get(each, "repeat", fallback="y") == "y":  # Repeat requested
                         infohandler("Repeat on " + str(each))  # Set stage as repeat was on
                         controller.switch(each, 1)
                         devicestate[each] = 1
-                    else:
+                    elif devicestate[each] == 1:
                         infohandler("Stays on " + str(each))  # Device was on and command not repeated
                     allOff = 0
 
@@ -118,17 +129,16 @@ def start():
                             controller.switch(each, 0)
                             devicestate[each] = 0
                             infohandler("Switch off " + str(each))  # Set stage off
-                        elif config.get(each, "repeat", fallback="y") == "y":
+                        elif devicestate[each] == 0 and config.get(each, "repeat", fallback="y") == "y":
                             infohandler("Repeat off " + str(each))  # Set stage as repeat was on
                             controller.switch(each, 0)
                             devicestate[each] = 0
-                        else:
+                        elif devicestate[each] == 0:
                             infohandler("Stays off " + str(each))  # Device was on and command not repeated
                 if n == (len(utime1) - 1):  # Set next change on startup
-                    errorhandler("Clickclack: No next schedule found on init", 0, 0)
+                    errorhandler("Clickclack: No next schedule found on init", 0, 1)
                 else:
                     nextchange = int(utime1[n + 1])
-
             n = n + 1
 
         if currentchange == 30:  # Current change was not found, assume all Off
@@ -163,18 +173,27 @@ def start():
                     nextchange = next
                     break
             if nextchange == 30:  # Next change not found
-                infohandler("Init. Something is wrong, next setup not found!")
-                errorhandler("Clickclack: Schedule not found for future setting in init", 0, 0)
-
+                if changeorigin != "w":
+                    infohandler("Init. Something is wrong, next setup not found!")
+                    errorhandler("Clickclack: Schedule not found for future setting in init", 0, 1)
+                elif changeorigin == "w":
+                    infohandler("Webchange was initiated, no next schedule found.")
+                elif changeorigin == "f":
+                    infohandler("Webchange was initiated, no next schedule found, fixed days.")
         else:
             infohandler("Init. Next Update, --> Schedule: " + datetime.datetime.utcfromtimestamp(
                 nextchange + settime(tz)).strftime('%H:%M'))
             infohandler("Switch on " + str(schedule1[nextchange]))
 
     init()
+    a = 0
 
     while True:
         if nextchange <= int(time.time()) and int(time.time()) < (nextchange + 3600):
+            if nextchange not in schedule1:
+                nextchange = 30
+                errorcode = 24
+                continue
             infohandler("This Update -> Time now:" + datetime.datetime.utcfromtimestamp(
                 time.time() + settime(tz)).strftime('%H:%M (%Y-%m-%d)') + " Scheduled: "
                         + datetime.datetime.utcfromtimestamp(nextchange + settime(tz)).strftime('%H:%M (%Y-%m-%d)'))
@@ -208,7 +227,7 @@ def start():
                 nextchange = 30  # If next time is not found, variable stays in 30
                 if next > currentchange:
                     nextchange = next
-                    errorCode = 0
+                    errorcode = 0
                     infohandler("Next Update --> Time now: " + datetime.datetime.utcfromtimestamp(
                         time.time() + settime(tz)).strftime('%H:%M') + " Scheduled: "
                                 + datetime.datetime.utcfromtimestamp(nextchange + settime(tz)).strftime('%H:%M'))
@@ -234,33 +253,107 @@ def start():
             allOff = 1
 
         if nextchange == 30:
-            if errorCode != 0:  # We are here the second time, so init and schedulecreation has failed
+            if errorcode == 22:  # We are here the second time, so init and schedulecreation has failed
+                currentchangeday = (datetime.datetime.utcfromtimestamp(currentchange + settime(tz)).strftime('%Y-%m-%d %H:%M'))
+                currentday = (datetime.datetime.utcfromtimestamp(time.time() + settime(tz)).strftime('%Y-%m-%d %H:%M'))
+                midnight = datetime.datetime.combine(datetime.datetime.today(), datetime.datetime.max.time())
+                crondate = midnight.replace(hour=int(cron), minute=0, second=0, microsecond=0)
+                now = datetime.datetime.today()
+
+                if currentchangeday == currentday:
+                    aux.infohandler("Next schedule not found, but we are still in same day.")
+                    aux.infohandler("Wait until new schedule is available")
+                    if now < crondate:
+                        wait = ((crondate - now).total_seconds())
+                        infohandler("Autofetch event incoming, waiting for " + str(int(wait)) + " seconds.")
+                    else:
+                        wait = ((midnight - now).total_seconds())
+                        infohandler("Autofetch event passed, wait until midnight for "
+                                    + str(int(wait)) + " seconds.")
+                    time.sleep(wait)
+                    errorcode = 23
+                    reload()
+                    init()
+                else:
+                    errorcode = 23
+            elif errorcode == 23:
                 infohandler("Something is wrong, next schedule not found!")
                 infohandler("Fallback to backup schedule.")
                 errorhandler("Clickclack: New schedule creation has failed, "
-                             "fallback too all backup and pause for 1h until fixed.", "none", 1)
+                             "fallback to backup and pause for 1h until fixed.", "none", 1)
                 # Errorhandler on second time
                 controller.switch("backup", 0)
                 time.sleep(3600)
                 reload()
                 init()
                 continue
-            else:
-                errorCode = 22  # Next change not found, try reloading all
+            elif errorcode == 24:
+                errorcode = 22  # Next change not found, try reloading all
                 infohandler("Reloading schedule")
                 reload()  # Time to get new schedule
                 init()  # Inner function
+            else:
+                origin = "" # Origin of change, do we need to stop updates?
+                try:
+                    f = open("data/origin", "r")
+                    origin = f.read()
+                    f.close()
+                except:
+                    origin = "S"
+
+                if origin == "S":
+                    errorcode = 22  # Next change not found, try reloading all
+                    infohandler("Reloading schedule")
+                    reload()  # Time to get new schedule
+                    init()  # Inner function
+                else:
+                    try:
+                        f = open("data/last", "r")
+                        key = f.read()
+                        f.close()
+                    except:
+                        key = 0
+                        pass
+                    nextchange = int(key)
+                    infohandler("Next Update --> Time now: " + datetime.datetime.utcfromtimestamp(
+                        time.time() + settime(tz)).strftime('%H:%M') + " Scheduled: "
+                                + datetime.datetime.utcfromtimestamp(nextchange + settime(tz)).strftime('%H:%M'))
                 continue
         # Reload at set time
         elif int((datetime.datetime.utcfromtimestamp(time.time() + settime(tz)).strftime('%H'))) == int(cron):
             if previousupdate != (int((datetime.datetime.utcfromtimestamp(time.time() + settime(tz)).strftime('%d')))):
-                aux.infohandler("Periodical schedule creation")
+                aux.infohandler("Periodical schedule creation")  # JOS on WB edit
                 reload()
                 init()
                 previousupdate = (int((datetime.datetime.utcfromtimestamp(time.time() + settime(tz)).strftime('%d'))))
                 continue
-        time.sleep(0.01)
 
+        # Check if schedule has been updated
+        ti_m = int(os.path.getctime('data/schedule1.pkl'))
+        if changeorigin == "r":  # Reload was done, so don't read file again
+            oldtime = ti_m
+            changeorigin = ""
+
+        if oldtime < ti_m:
+            schedule1.clear()
+            oldtime = ti_m
+            time.sleep(1)  # let filesystem settle down
+            try:
+                with open('data/schedule1.pkl', 'rb') as f:
+                    infohandler("Reloading schedule due change in file")
+                    temp_schedule = pickle.load(f)
+                    f.close()
+                    # Sort hours, annoying dic....
+                    dkeys = list(temp_schedule.keys())
+                    dkeys.sort()
+                    schedule1 = {i: temp_schedule[i] for i in dkeys}
+                    changeorigin = "w"  # External update on file happened
+            except Exception as y:
+                errorhandler("Clickclack: Schedule file not found on reload (file update).", y, 1)
+                pass
+            init()
+
+        time.sleep(0.01)
 
 reload()
 start()

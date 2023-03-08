@@ -13,7 +13,7 @@ os.chdir(dname)
 try:
     config.read('conf/devices.conf')
 except Exception as e:
-    aux.errorhandler("Controller: Config not found", e, 1)
+    aux.errorhandler("Controller: Config not found", e, 2)
     exit()
 
 
