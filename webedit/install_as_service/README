@@ -1,0 +1,25 @@
+You can use scripts install_service.sh and uninstall_service.sh to install clickclack as service.
+First create a file "clickclack.service" based on your system, Raspberry/Rasbian example provided as following:
+
+--------Example--------
+
+[Unit]
+Description=ClickClack service for relay control
+
+[Service]
+User=pi
+Group=pi
+ExecStart=/usr/bin/python3 clickclack.py
+WorkingDirectory=/home/pi/clickclack
+Restart=always
+RestartSec=60
+
+[Install]
+Alias=clickclack
+WantedBy=multi-user.target
+
+--------Example--------
+
+Change fields: User, Group: ExecStart and WorkingDirectory according to your environment.
+Use pwd command on your home directory for dir.
+
