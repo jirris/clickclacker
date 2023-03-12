@@ -73,7 +73,7 @@ tools/check_clickclack.sh, small script to check if clickclack service is runnin
 
 data/schedule.csv and data/schedule.html, current schedules in CSV and HTML format for viewing.
 
-Tools/install/ tools for system service for Rasbian installation, for others edit clickclack.service file for right user and home directory.  
+tools/install/ tools for system service for Rasbian installation, for others edit clickclack.service file for right user and home directory.  
 edit_config.sh, use this to edit devices.conf after Clickclack has been installed as service (restarts service after install)
 
 Scripts/gpio.sh, tool for changing GPIO state for example to change relay status on Raspberry. Use with:    

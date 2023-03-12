@@ -22,6 +22,7 @@ try:
     json_date = config["DEFAULT"]["json_date"]
     json_rank = config["DEFAULT"]["json_rank"]
     entsoe = config["DEFAULT"]["entsoe"]
+    entsoebackup = config["DEFAULT"]["entsoebackup"]
     etoken = config["DEFAULT"]["etoken"]
     ecountry = config["DEFAULT"]["ecountry"]
     tz = float(config["DEFAULT"]["timezone"])
@@ -180,7 +181,7 @@ def ehours(day, hours, adj, device):
     skip = 0
 
     offset = aux.settime(tz)  # Unixtime offset
-
+    offset = 0
     if 1 <= hours <= 24:
         nhours = hours
     else:
@@ -246,7 +247,7 @@ def ehours(day, hours, adj, device):
             startdate = data.find("start").text
             enddate = data.find("end").text
 
-            date_time = (datetime.datetime.strptime(startdate, '%Y-%m-%dT%H:%M%z'))
+            date_time = (datetime.datetime.strptime(startdate, '%Y-%m-%dT%H:%M%z') + datetime.timedelta(hours=int(tz)))
             date_time = int((int(time.mktime(date_time.timetuple()))))
 
             hour = 1
@@ -328,11 +329,15 @@ def ehours(day, hours, adj, device):
 
 def hours(day, hours, adj, device):
     if entsoe == "y":
-        return ehours(day, hours, adj, device)
+        returnvalue = ehours(day, hours, adj, device)
+        if returnvalue == "error" and entsoebackup == "y":
+            return hoursJSON(day, hours, adj, device)
+        else:
+            return returnvalue
     else:
         return hoursJSON(day, hours, adj, device)
 
 
 if __name__ == '__main__':
-    # print((ehours(2, 4, 0, "Inverter")))
-    print((hoursJSON(1, 6, 0, "Inverter")))
+    print((ehours(1, 4, 0, "Inverter")))
+    #print((hoursJSON(1, 6, 0, "Inverter")))

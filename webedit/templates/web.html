@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html>
+ <head>
+  <title>
+   ClickClack Schedule
+  </title>
+<style>
+
+div.parent {
+	font-family: "Calibri";
+	font-size: 17px;
+	vertical-align: middle;
+	margin: 0;
+	height: 100%;
+	border: 0;
+}
+
+div {
+	font-family: "Calibri";
+	font-size: 17px;
+	vertical-align: middle;
+	text-align: center;
+	margin: 0 auto;
+	padding-top: 3px;
+	width: 60px;
+	height: 27px;
+	border-right: 1px solid black;
+}
+
+div.devices {
+	width: 140px;
+	height: 27px;
+	align: left;
+	margin: 0 0 0 10px;
+	text-align: left;
+	padding: 3px 0 0 0px;
+	vertical-align: middle;
+}
+
+div.date {
+	width: 150px;
+	height: 27px;
+	align: left;
+	margin: 0;
+	padding-top: 3px;
+	text-align: left;
+	font-weight: bold;
+	vertical-align: middle;
+}
+
+.switch {
+	position: relative;
+	left: 5px;
+	display: block;
+	vertical-align: top;
+	width: 50px;
+	height: 27px;
+	background: linear-gradient(to bottom, #eeeeee, #FFFFFF 25px);
+	background-image: -webkit-linear-gradient(top, #eeeeee, #FFFFFF 25px);
+	border-radius: 18px;
+	cursor: pointer;
+	box-sizing:content-box;
+}
+.switch-input {
+	position: absolute;
+	top: 0;
+	left: 0;
+	opacity: 0;
+	box-sizing:content-box;
+}
+.switch-label {
+	position: relative;
+	display: block;
+	height: inherit;
+	font-size: 15px;
+	font-family: "Calibri";
+	text-transform: uppercase;
+	background: #eceeef;
+	border-radius: inherit;
+	box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.12), inset 0 0 2px rgba(0, 0, 0, 0.15);
+	box-sizing:content-box;
+}
+.switch-label:before, .switch-label:after {
+	position: absolute;
+	top: 50%;
+	-webkit-transition: inherit;
+	-moz-transition: inherit;
+	-o-transition: inherit;
+	transition: inherit;
+	box-sizing:content-box;
+}
+.switch-label:before {
+	content: attr(data-off);
+	right: 11px;
+	color: #555555;
+	text-shadow: 1px 1px #EEEEEE;
+}
+.switch-label:after {
+	content: attr(data-on);
+	left: 11px;
+	color: #FFFFFF;
+	text-shadow: 1px 1px #555555;
+	opacity: 0;
+}
+.switch-input:checked ~ .switch-label {
+	background: #E1B42B;
+}
+.switch-input:checked ~ .switch-label:before {
+	opacity: 0;
+}
+.switch-input:checked ~ .switch-label:after {
+	opacity: 1;
+}
+.switch-handle {
+	position: absolute;
+	top: 4px;
+	left: 4px;
+	width: 28px;
+	height: 28px;
+	background: linear-gradient(to bottom, #FFFFFF 40%, #f0f0f0);
+	background-image: -webkit-linear-gradient(top, #FFFFFF 40%, #f0f0f0);
+	border-radius: 100%;
+
+}
+.switch-handle:before {
+	content: "";
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 12px;
+	height: 12px;
+	background: linear-gradient(to bottom, #eeeeee, #FFFFFF);
+	background-image: -webkit-linear-gradient(top, #eeeeee, #FFFFFF);
+	border-radius: 6px;
+	box-shadow: inset 0 1px rgba(0, 0, 0, 0.02);
+}
+.switch-input:checked ~ .switch-handle {
+	left: 74px;
+	box-shadow: -1px 1px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* Transition
+========================== */
+.switch-label, .switch-handle {
+	transition: All 0.3s ease;
+	-webkit-transition: All 0.3s ease;
+	-moz-transition: All 0.3s ease;
+	-o-transition: All 0.3s ease;
+}
+
+/* Switch Yes No
+==========================*/
+.switch-yes-no {
+	padding: 0;
+	margin: 0;
+	background: #FFF;
+	border-radius: 0;
+	background-image: none;
+}
+.switch-yes-no .switch-label {
+	box-shadow: none;
+	background: none;
+}
+.switch-yes-no .switch-label:after, .switch-yes-no .switch-label:before {
+	width: 100%;
+	height: 100%;
+	top: 0;
+	left: 0;
+	text-align: center;
+	vertical-align: middle;
+	padding-top: 3px;
+	box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.2), inset 0 0 3px rgba(0, 0, 0, 0.1);
+}
+.switch-yes-no .switch-label:after {
+	color: #FFFFFF;
+	background: #32BA32;
+	backface-visibility: hidden;
+	transform: rotateY(180deg);
+	font-weight: bold;
+	font-size: 17px;
+}
+.switch-yes-no .switch-label:before {
+	background: #eceeef;
+	backface-visibility: hidden;
+}
+.switch-yes-no .switch-handle {
+	display: none;
+}
+.switch-yes-no .switch-input:checked ~ .switch-label {
+	background: #FFF;
+	border-color: #0088cc;
+}
+.switch-yes-no .switch-input:checked ~ .switch-label:before {
+	transform: rotateY(180deg)
+}
+.switch-yes-no .switch-input:checked ~ .switch-label:after {
+	transform: rotateY(0)
+}
+
+body {
+  font-family: "Calibri";
+}
+
+input[type=submit]{
+  text-shadow: 1px 1px 2px #555555;
+  color: white;
+  text-decoration: none;
+  margin: 10px 10px 0 0;
+  cursor: pointer;
+  width: 120px;
+  height: 35px;
+  font-size: 17px;
+  font-weight: bold;
+  font-family: "Calibri";
+}
+.parent { 
+display: grid;
+grid-template-columns: repeat(25, 1fr);
+grid-template-rows: repeat(10, 1fr);
+grid-column-gap: 0px;
+grid-row-gap: 10px;
+}
+   </style>
+ </head>
+ <body>
+<form method="post">
+<div class="parent">
+<div class="date">12.03.2023</div>
+<div class="div2">00</div>
+<div class="div3">01</div>
+<div class="div4">02</div>
+<div class="div5">03</div>
+<div class="div6">04</div>
+<div class="div7">05</div>
+<div class="div8">06</div>
+<div class="div9">07</div>
+<div class="div10">08</div>
+<div class="div11">09</div>
+<div class="div12">10</div>
+<div class="div13">11</div>
+<div class="div14">12</div>
+<div class="div15">13</div>
+<div class="div16">14</div>
+<div class="div17">15</div>
+<div class="div18">16</div>
+<div class="div19">17</div>
+<div class="div20">18</div>
+<div class="div21">19</div>
+<div class="div22">20</div>
+<div class="div23">21</div>
+<div class="div24">22</div>
+<div class="div25">23</div>
+<div class="devices">Heatpump </div>
+<div class="div27"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678572000_Heatpump"/><span class="switch-handle"></span><span class="switch-label" data-on="11.16" data-off="11.16"></span> </label></div>
+<div class="div28"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678575600_Heatpump"/><span class="switch-handle"></span><span class="switch-label" data-on="11.08" data-off="11.08"></span> </label></div>
+<div class="div29"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678579200_Heatpump"/><span class="switch-handle"></span><span class="switch-label" data-on="9.02" data-off="9.02"></span> </label></div>
+<div class="div30"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678582800_Heatpump" checked/><span class="switch-handle"></span><span class="switch-label" data-on="8.56" data-off="8.56"></span> </label></div>
+<div class="div31"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678586400_Heatpump" checked/><span class="switch-handle"></span><span class="switch-label" data-on="7.87" data-off="7.87"></span> </label></div>
+<div class="div32"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678590000_Heatpump" checked/><span class="switch-handle"></span><span class="switch-label" data-on="7.86" data-off="7.86"></span> </label></div>
+<div class="div33"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678593600_Heatpump" checked/><span class="switch-handle"></span><span class="switch-label" data-on="8.2" data-off="8.2"></span> </label></div>
+<div class="div34"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678597200_Heatpump" checked/><span class="switch-handle"></span><span class="switch-label" data-on="7.52" data-off="7.52"></span> </label></div>
+<div class="div35"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678600800_Heatpump" checked/><span class="switch-handle"></span><span class="switch-label" data-on="7.26" data-off="7.26"></span> </label></div>
+<div class="div36"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678604400_Heatpump" checked/><span class="switch-handle"></span><span class="switch-label" data-on="8.99" data-off="8.99"></span> </label></div>
+<div class="div37"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678608000_Heatpump" checked/><span class="switch-handle"></span><span class="switch-label" data-on="8.64" data-off="8.64"></span> </label></div>
+<div class="div38"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678611600_Heatpump" checked/><span class="switch-handle"></span><span class="switch-label" data-on="7.28" data-off="7.28"></span> </label></div>
+<div class="div39"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678615200_Heatpump" checked/><span class="switch-handle"></span><span class="switch-label" data-on="7.35" data-off="7.35"></span> </label></div>
+<div class="div40"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678618800_Heatpump" checked/><span class="switch-handle"></span><span class="switch-label" data-on="7.27" data-off="7.27"></span> </label></div>
+<div class="div41"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678622400_Heatpump" checked/><span class="switch-handle"></span><span class="switch-label" data-on="7.4" data-off="7.4"></span> </label></div>
+<div class="div42"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678626000_Heatpump" checked/><span class="switch-handle"></span><span class="switch-label" data-on="7.7" data-off="7.7"></span> </label></div>
+<div class="div43"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678629600_Heatpump" checked/><span class="switch-handle"></span><span class="switch-label" data-on="8.24" data-off="8.24"></span> </label></div>
+<div class="div44"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678633200_Heatpump"/><span class="switch-handle"></span><span class="switch-label" data-on="9.36" data-off="9.36"></span> </label></div>
+<div class="div45"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678636800_Heatpump"/><span class="switch-handle"></span><span class="switch-label" data-on="11.1" data-off="11.1"></span> </label></div>
+<div class="div46"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678640400_Heatpump"/><span class="switch-handle"></span><span class="switch-label" data-on="12.04" data-off="12.04"></span> </label></div>
+<div class="div47"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678644000_Heatpump"/><span class="switch-handle"></span><span class="switch-label" data-on="12.23" data-off="12.23"></span> </label></div>
+<div class="div48"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678647600_Heatpump"/><span class="switch-handle"></span><span class="switch-label" data-on="11.64" data-off="11.64"></span> </label></div>
+<div class="div49"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678651200_Heatpump"/><span class="switch-handle"></span><span class="switch-label" data-on="11.16" data-off="11.16"></span> </label></div>
+<div class="div50"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678654800_Heatpump"/><span class="switch-handle"></span><span class="switch-label" data-on="10.18" data-off="10.18"></span> </label></div>
+<div class="devices">Inverter </div>
+<div class="div52"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678572000_Inverter"/><span class="switch-handle"></span><span class="switch-label" data-on="11.16" data-off="11.16"></span> </label></div>
+<div class="div53"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678575600_Inverter"/><span class="switch-handle"></span><span class="switch-label" data-on="11.08" data-off="11.08"></span> </label></div>
+<div class="div54"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678579200_Inverter"/><span class="switch-handle"></span><span class="switch-label" data-on="9.02" data-off="9.02"></span> </label></div>
+<div class="div55"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678582800_Inverter"/><span class="switch-handle"></span><span class="switch-label" data-on="8.56" data-off="8.56"></span> </label></div>
+<div class="div56"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678586400_Inverter"/><span class="switch-handle"></span><span class="switch-label" data-on="7.87" data-off="7.87"></span> </label></div>
+<div class="div57"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678590000_Inverter"/><span class="switch-handle"></span><span class="switch-label" data-on="7.86" data-off="7.86"></span> </label></div>
+<div class="div58"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678593600_Inverter"/><span class="switch-handle"></span><span class="switch-label" data-on="8.2" data-off="8.2"></span> </label></div>
+<div class="div59"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678597200_Inverter"/><span class="switch-handle"></span><span class="switch-label" data-on="7.52" data-off="7.52"></span> </label></div>
+<div class="div60"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678600800_Inverter"/><span class="switch-handle"></span><span class="switch-label" data-on="7.26" data-off="7.26"></span> </label></div>
+<div class="div61"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678604400_Inverter"/><span class="switch-handle"></span><span class="switch-label" data-on="8.99" data-off="8.99"></span> </label></div>
+<div class="div62"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678608000_Inverter"/><span class="switch-handle"></span><span class="switch-label" data-on="8.64" data-off="8.64"></span> </label></div>
+<div class="div63"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678611600_Inverter"/><span class="switch-handle"></span><span class="switch-label" data-on="7.28" data-off="7.28"></span> </label></div>
+<div class="div64"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678615200_Inverter"/><span class="switch-handle"></span><span class="switch-label" data-on="7.35" data-off="7.35"></span> </label></div>
+<div class="div65"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678618800_Inverter"/><span class="switch-handle"></span><span class="switch-label" data-on="7.27" data-off="7.27"></span> </label></div>
+<div class="div66"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678622400_Inverter"/><span class="switch-handle"></span><span class="switch-label" data-on="7.4" data-off="7.4"></span> </label></div>
+<div class="div67"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678626000_Inverter"/><span class="switch-handle"></span><span class="switch-label" data-on="7.7" data-off="7.7"></span> </label></div>
+<div class="div68"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678629600_Inverter" checked/><span class="switch-handle"></span><span class="switch-label" data-on="8.24" data-off="8.24"></span> </label></div>
+<div class="div69"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678633200_Inverter" checked/><span class="switch-handle"></span><span class="switch-label" data-on="9.36" data-off="9.36"></span> </label></div>
+<div class="div70"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678636800_Inverter"/><span class="switch-handle"></span><span class="switch-label" data-on="11.1" data-off="11.1"></span> </label></div>
+<div class="div71"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678640400_Inverter"/><span class="switch-handle"></span><span class="switch-label" data-on="12.04" data-off="12.04"></span> </label></div>
+<div class="div72"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678644000_Inverter"/><span class="switch-handle"></span><span class="switch-label" data-on="12.23" data-off="12.23"></span> </label></div>
+<div class="div73"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678647600_Inverter"/><span class="switch-handle"></span><span class="switch-label" data-on="11.64" data-off="11.64"></span> </label></div>
+<div class="div74"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678651200_Inverter"/><span class="switch-handle"></span><span class="switch-label" data-on="11.16" data-off="11.16"></span> </label></div>
+<div class="div75"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678654800_Inverter"/><span class="switch-handle"></span><span class="switch-label" data-on="10.18" data-off="10.18"></span> </label></div>
+<div class="devices">Floor heating </div>
+<div class="div77"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678572000_Floor heating"/><span class="switch-handle"></span><span class="switch-label" data-on="11.16" data-off="11.16"></span> </label></div>
+<div class="div78"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678575600_Floor heating"/><span class="switch-handle"></span><span class="switch-label" data-on="11.08" data-off="11.08"></span> </label></div>
+<div class="div79"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678579200_Floor heating"/><span class="switch-handle"></span><span class="switch-label" data-on="9.02" data-off="9.02"></span> </label></div>
+<div class="div80"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678582800_Floor heating" checked/><span class="switch-handle"></span><span class="switch-label" data-on="8.56" data-off="8.56"></span> </label></div>
+<div class="div81"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678586400_Floor heating" checked/><span class="switch-handle"></span><span class="switch-label" data-on="7.87" data-off="7.87"></span> </label></div>
+<div class="div82"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678590000_Floor heating" checked/><span class="switch-handle"></span><span class="switch-label" data-on="7.86" data-off="7.86"></span> </label></div>
+<div class="div83"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678593600_Floor heating" checked/><span class="switch-handle"></span><span class="switch-label" data-on="8.2" data-off="8.2"></span> </label></div>
+<div class="div84"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678597200_Floor heating" checked/><span class="switch-handle"></span><span class="switch-label" data-on="7.52" data-off="7.52"></span> </label></div>
+<div class="div85"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678600800_Floor heating" checked/><span class="switch-handle"></span><span class="switch-label" data-on="7.26" data-off="7.26"></span> </label></div>
+<div class="div86"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678604400_Floor heating"/><span class="switch-handle"></span><span class="switch-label" data-on="8.99" data-off="8.99"></span> </label></div>
+<div class="div87"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678608000_Floor heating" checked/><span class="switch-handle"></span><span class="switch-label" data-on="8.64" data-off="8.64"></span> </label></div>
+<div class="div88"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678611600_Floor heating" checked/><span class="switch-handle"></span><span class="switch-label" data-on="7.28" data-off="7.28"></span> </label></div>
+<div class="div89"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678615200_Floor heating" checked/><span class="switch-handle"></span><span class="switch-label" data-on="7.35" data-off="7.35"></span> </label></div>
+<div class="div90"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678618800_Floor heating" checked/><span class="switch-handle"></span><span class="switch-label" data-on="7.27" data-off="7.27"></span> </label></div>
+<div class="div91"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678622400_Floor heating" checked/><span class="switch-handle"></span><span class="switch-label" data-on="7.4" data-off="7.4"></span> </label></div>
+<div class="div92"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678626000_Floor heating" checked/><span class="switch-handle"></span><span class="switch-label" data-on="7.7" data-off="7.7"></span> </label></div>
+<div class="div93"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678629600_Floor heating" checked/><span class="switch-handle"></span><span class="switch-label" data-on="8.24" data-off="8.24"></span> </label></div>
+<div class="div94"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678633200_Floor heating"/><span class="switch-handle"></span><span class="switch-label" data-on="9.36" data-off="9.36"></span> </label></div>
+<div class="div95"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678636800_Floor heating"/><span class="switch-handle"></span><span class="switch-label" data-on="11.1" data-off="11.1"></span> </label></div>
+<div class="div96"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678640400_Floor heating"/><span class="switch-handle"></span><span class="switch-label" data-on="12.04" data-off="12.04"></span> </label></div>
+<div class="div97"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678644000_Floor heating"/><span class="switch-handle"></span><span class="switch-label" data-on="12.23" data-off="12.23"></span> </label></div>
+<div class="div98"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678647600_Floor heating"/><span class="switch-handle"></span><span class="switch-label" data-on="11.64" data-off="11.64"></span> </label></div>
+<div class="div99"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678651200_Floor heating"/><span class="switch-handle"></span><span class="switch-label" data-on="11.16" data-off="11.16"></span> </label></div>
+<div class="div100"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678654800_Floor heating"/><span class="switch-handle"></span><span class="switch-label" data-on="10.18" data-off="10.18"></span> </label></div>
+<div class="devices">Car charger </div>
+<div class="div102"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678572000_Car charger" checked/><span class="switch-handle"></span><span class="switch-label" data-on="11.16" data-off="11.16"></span> </label></div>
+<div class="div103"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678575600_Car charger" checked/><span class="switch-handle"></span><span class="switch-label" data-on="11.08" data-off="11.08"></span> </label></div>
+<div class="div104"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678579200_Car charger" checked/><span class="switch-handle"></span><span class="switch-label" data-on="9.02" data-off="9.02"></span> </label></div>
+<div class="div105"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678582800_Car charger" checked/><span class="switch-handle"></span><span class="switch-label" data-on="8.56" data-off="8.56"></span> </label></div>
+<div class="div106"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678586400_Car charger" checked/><span class="switch-handle"></span><span class="switch-label" data-on="7.87" data-off="7.87"></span> </label></div>
+<div class="div107"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678590000_Car charger" checked/><span class="switch-handle"></span><span class="switch-label" data-on="7.86" data-off="7.86"></span> </label></div>
+<div class="div108"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678593600_Car charger" checked/><span class="switch-handle"></span><span class="switch-label" data-on="8.2" data-off="8.2"></span> </label></div>
+<div class="div109"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678597200_Car charger"/><span class="switch-handle"></span><span class="switch-label" data-on="7.52" data-off="7.52"></span> </label></div>
+<div class="div110"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678600800_Car charger"/><span class="switch-handle"></span><span class="switch-label" data-on="7.26" data-off="7.26"></span> </label></div>
+<div class="div111"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678604400_Car charger"/><span class="switch-handle"></span><span class="switch-label" data-on="8.99" data-off="8.99"></span> </label></div>
+<div class="div112"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678608000_Car charger"/><span class="switch-handle"></span><span class="switch-label" data-on="8.64" data-off="8.64"></span> </label></div>
+<div class="div113"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678611600_Car charger"/><span class="switch-handle"></span><span class="switch-label" data-on="7.28" data-off="7.28"></span> </label></div>
+<div class="div114"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678615200_Car charger"/><span class="switch-handle"></span><span class="switch-label" data-on="7.35" data-off="7.35"></span> </label></div>
+<div class="div115"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678618800_Car charger"/><span class="switch-handle"></span><span class="switch-label" data-on="7.27" data-off="7.27"></span> </label></div>
+<div class="div116"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678622400_Car charger"/><span class="switch-handle"></span><span class="switch-label" data-on="7.4" data-off="7.4"></span> </label></div>
+<div class="div117"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678626000_Car charger"/><span class="switch-handle"></span><span class="switch-label" data-on="7.7" data-off="7.7"></span> </label></div>
+<div class="div118"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678629600_Car charger"/><span class="switch-handle"></span><span class="switch-label" data-on="8.24" data-off="8.24"></span> </label></div>
+<div class="div119"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678633200_Car charger"/><span class="switch-handle"></span><span class="switch-label" data-on="9.36" data-off="9.36"></span> </label></div>
+<div class="div120"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678636800_Car charger"/><span class="switch-handle"></span><span class="switch-label" data-on="11.1" data-off="11.1"></span> </label></div>
+<div class="div121"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678640400_Car charger"/><span class="switch-handle"></span><span class="switch-label" data-on="12.04" data-off="12.04"></span> </label></div>
+<div class="div122"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678644000_Car charger"/><span class="switch-handle"></span><span class="switch-label" data-on="12.23" data-off="12.23"></span> </label></div>
+<div class="div123"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678647600_Car charger"/><span class="switch-handle"></span><span class="switch-label" data-on="11.64" data-off="11.64"></span> </label></div>
+<div class="div124"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678651200_Car charger"/><span class="switch-handle"></span><span class="switch-label" data-on="11.16" data-off="11.16"></span> </label></div>
+<div class="div125"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678654800_Car charger"/><span class="switch-handle"></span><span class="switch-label" data-on="10.18" data-off="10.18"></span> </label></div>
+<div class="date">13.03.2023</div>
+<div class="div127"></div>
+<div class="div128"></div>
+<div class="div129"></div>
+<div class="div130"></div>
+<div class="div131"></div>
+<div class="div132"></div>
+<div class="div133"></div>
+<div class="div134"></div>
+<div class="div135"></div>
+<div class="div136"></div>
+<div class="div137"></div>
+<div class="div138"></div>
+<div class="div139"></div>
+<div class="div140"></div>
+<div class="div141"></div>
+<div class="div142"></div>
+<div class="div143"></div>
+<div class="div144"></div>
+<div class="div145"></div>
+<div class="div146"></div>
+<div class="div147"></div>
+<div class="div148"></div>
+<div class="div149"></div>
+<div class="div150"></div>
+<div class="devices">Heatpump </div>
+<div class="div151"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678658400_Heatpump"/><span class="switch-handle"></span><span class="switch-label" data-on="7.15" data-off="7.15"></span> </label></div>
+<div class="div152"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678662000_Heatpump" checked/><span class="switch-handle"></span><span class="switch-label" data-on="5.48" data-off="5.48"></span> </label></div>
+<div class="div153"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678665600_Heatpump" checked/><span class="switch-handle"></span><span class="switch-label" data-on="4.31" data-off="4.31"></span> </label></div>
+<div class="div154"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678669200_Heatpump" checked/><span class="switch-handle"></span><span class="switch-label" data-on="3.8" data-off="3.8"></span> </label></div>
+<div class="div155"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678672800_Heatpump" checked/><span class="switch-handle"></span><span class="switch-label" data-on="3.35" data-off="3.35"></span> </label></div>
+<div class="div156"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678676400_Heatpump" checked/><span class="switch-handle"></span><span class="switch-label" data-on="4.12" data-off="4.12"></span> </label></div>
+<div class="div157"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678680000_Heatpump"/><span class="switch-handle"></span><span class="switch-label" data-on="6.54" data-off="6.54"></span> </label></div>
+<div class="div158"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678683600_Heatpump"/><span class="switch-handle"></span><span class="switch-label" data-on="10.13" data-off="10.13"></span> </label></div>
+<div class="div159"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678687200_Heatpump"/><span class="switch-handle"></span><span class="switch-label" data-on="11.46" data-off="11.46"></span> </label></div>
+<div class="div160"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678690800_Heatpump"/><span class="switch-handle"></span><span class="switch-label" data-on="11.46" data-off="11.46"></span> </label></div>
+<div class="div161"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678694400_Heatpump"/><span class="switch-handle"></span><span class="switch-label" data-on="10.64" data-off="10.64"></span> </label></div>
+<div class="div162"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678698000_Heatpump"/><span class="switch-handle"></span><span class="switch-label" data-on="11.41" data-off="11.41"></span> </label></div>
+<div class="div163"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678701600_Heatpump"/><span class="switch-handle"></span><span class="switch-label" data-on="11.01" data-off="11.01"></span> </label></div>
+<div class="div164"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678705200_Heatpump"/><span class="switch-handle"></span><span class="switch-label" data-on="11.45" data-off="11.45"></span> </label></div>
+<div class="div165"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678708800_Heatpump"/><span class="switch-handle"></span><span class="switch-label" data-on="11.45" data-off="11.45"></span> </label></div>
+<div class="div166"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678712400_Heatpump"/><span class="switch-handle"></span><span class="switch-label" data-on="9.62" data-off="9.62"></span> </label></div>
+<div class="div167"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678716000_Heatpump" checked/><span class="switch-handle"></span><span class="switch-label" data-on="4.88" data-off="4.88"></span> </label></div>
+<div class="div168"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678719600_Heatpump" checked/><span class="switch-handle"></span><span class="switch-label" data-on="3.48" data-off="3.48"></span> </label></div>
+<div class="div169"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678723200_Heatpump" checked/><span class="switch-handle"></span><span class="switch-label" data-on="5.21" data-off="5.21"></span> </label></div>
+<div class="div170"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678726800_Heatpump"/><span class="switch-handle"></span><span class="switch-label" data-on="5.77" data-off="5.77"></span> </label></div>
+<div class="div171"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678730400_Heatpump" checked/><span class="switch-handle"></span><span class="switch-label" data-on="5.38" data-off="5.38"></span> </label></div>
+<div class="div172"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678734000_Heatpump" checked/><span class="switch-handle"></span><span class="switch-label" data-on="4.82" data-off="4.82"></span> </label></div>
+<div class="div173"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678737600_Heatpump" checked/><span class="switch-handle"></span><span class="switch-label" data-on="4.64" data-off="4.64"></span> </label></div>
+<div class="div174"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678741200_Heatpump" checked/><span class="switch-handle"></span><span class="switch-label" data-on="3.81" data-off="3.81"></span> </label></div>
+<div class="devices">Inverter </div>
+<div class="div175"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678658400_Inverter"/><span class="switch-handle"></span><span class="switch-label" data-on="7.15" data-off="7.15"></span> </label></div>
+<div class="div176"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678662000_Inverter"/><span class="switch-handle"></span><span class="switch-label" data-on="5.48" data-off="5.48"></span> </label></div>
+<div class="div177"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678665600_Inverter"/><span class="switch-handle"></span><span class="switch-label" data-on="4.31" data-off="4.31"></span> </label></div>
+<div class="div178"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678669200_Inverter"/><span class="switch-handle"></span><span class="switch-label" data-on="3.8" data-off="3.8"></span> </label></div>
+<div class="div179"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678672800_Inverter"/><span class="switch-handle"></span><span class="switch-label" data-on="3.35" data-off="3.35"></span> </label></div>
+<div class="div180"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678676400_Inverter"/><span class="switch-handle"></span><span class="switch-label" data-on="4.12" data-off="4.12"></span> </label></div>
+<div class="div181"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678680000_Inverter"/><span class="switch-handle"></span><span class="switch-label" data-on="6.54" data-off="6.54"></span> </label></div>
+<div class="div182"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678683600_Inverter"/><span class="switch-handle"></span><span class="switch-label" data-on="10.13" data-off="10.13"></span> </label></div>
+<div class="div183"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678687200_Inverter"/><span class="switch-handle"></span><span class="switch-label" data-on="11.46" data-off="11.46"></span> </label></div>
+<div class="div184"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678690800_Inverter"/><span class="switch-handle"></span><span class="switch-label" data-on="11.46" data-off="11.46"></span> </label></div>
+<div class="div185"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678694400_Inverter"/><span class="switch-handle"></span><span class="switch-label" data-on="10.64" data-off="10.64"></span> </label></div>
+<div class="div186"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678698000_Inverter"/><span class="switch-handle"></span><span class="switch-label" data-on="11.41" data-off="11.41"></span> </label></div>
+<div class="div187"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678701600_Inverter"/><span class="switch-handle"></span><span class="switch-label" data-on="11.01" data-off="11.01"></span> </label></div>
+<div class="div188"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678705200_Inverter"/><span class="switch-handle"></span><span class="switch-label" data-on="11.45" data-off="11.45"></span> </label></div>
+<div class="div189"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678708800_Inverter"/><span class="switch-handle"></span><span class="switch-label" data-on="11.45" data-off="11.45"></span> </label></div>
+<div class="div190"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678712400_Inverter"/><span class="switch-handle"></span><span class="switch-label" data-on="9.62" data-off="9.62"></span> </label></div>
+<div class="div191"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678716000_Inverter" checked/><span class="switch-handle"></span><span class="switch-label" data-on="4.88" data-off="4.88"></span> </label></div>
+<div class="div192"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678719600_Inverter" checked/><span class="switch-handle"></span><span class="switch-label" data-on="3.48" data-off="3.48"></span> </label></div>
+<div class="div193"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678723200_Inverter" checked/><span class="switch-handle"></span><span class="switch-label" data-on="5.21" data-off="5.21"></span> </label></div>
+<div class="div194"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678726800_Inverter"/><span class="switch-handle"></span><span class="switch-label" data-on="5.77" data-off="5.77"></span> </label></div>
+<div class="div195"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678730400_Inverter"/><span class="switch-handle"></span><span class="switch-label" data-on="5.38" data-off="5.38"></span> </label></div>
+<div class="div196"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678734000_Inverter"/><span class="switch-handle"></span><span class="switch-label" data-on="4.82" data-off="4.82"></span> </label></div>
+<div class="div197"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678737600_Inverter"/><span class="switch-handle"></span><span class="switch-label" data-on="4.64" data-off="4.64"></span> </label></div>
+<div class="div198"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678741200_Inverter"/><span class="switch-handle"></span><span class="switch-label" data-on="3.81" data-off="3.81"></span> </label></div>
+<div class="devices">Floor heating </div>
+<div class="div199"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678658400_Floor heating"/><span class="switch-handle"></span><span class="switch-label" data-on="7.15" data-off="7.15"></span> </label></div>
+<div class="div200"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678662000_Floor heating"/><span class="switch-handle"></span><span class="switch-label" data-on="5.48" data-off="5.48"></span> </label></div>
+<div class="div201"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678665600_Floor heating" checked/><span class="switch-handle"></span><span class="switch-label" data-on="4.31" data-off="4.31"></span> </label></div>
+<div class="div202"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678669200_Floor heating" checked/><span class="switch-handle"></span><span class="switch-label" data-on="3.8" data-off="3.8"></span> </label></div>
+<div class="div203"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678672800_Floor heating" checked/><span class="switch-handle"></span><span class="switch-label" data-on="3.35" data-off="3.35"></span> </label></div>
+<div class="div204"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678676400_Floor heating" checked/><span class="switch-handle"></span><span class="switch-label" data-on="4.12" data-off="4.12"></span> </label></div>
+<div class="div205"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678680000_Floor heating"/><span class="switch-handle"></span><span class="switch-label" data-on="6.54" data-off="6.54"></span> </label></div>
+<div class="div206"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678683600_Floor heating"/><span class="switch-handle"></span><span class="switch-label" data-on="10.13" data-off="10.13"></span> </label></div>
+<div class="div207"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678687200_Floor heating"/><span class="switch-handle"></span><span class="switch-label" data-on="11.46" data-off="11.46"></span> </label></div>
+<div class="div208"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678690800_Floor heating"/><span class="switch-handle"></span><span class="switch-label" data-on="11.46" data-off="11.46"></span> </label></div>
+<div class="div209"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678694400_Floor heating"/><span class="switch-handle"></span><span class="switch-label" data-on="10.64" data-off="10.64"></span> </label></div>
+<div class="div210"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678698000_Floor heating"/><span class="switch-handle"></span><span class="switch-label" data-on="11.41" data-off="11.41"></span> </label></div>
+<div class="div211"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678701600_Floor heating"/><span class="switch-handle"></span><span class="switch-label" data-on="11.01" data-off="11.01"></span> </label></div>
+<div class="div212"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678705200_Floor heating"/><span class="switch-handle"></span><span class="switch-label" data-on="11.45" data-off="11.45"></span> </label></div>
+<div class="div213"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678708800_Floor heating"/><span class="switch-handle"></span><span class="switch-label" data-on="11.45" data-off="11.45"></span> </label></div>
+<div class="div214"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678712400_Floor heating"/><span class="switch-handle"></span><span class="switch-label" data-on="9.62" data-off="9.62"></span> </label></div>
+<div class="div215"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678716000_Floor heating" checked/><span class="switch-handle"></span><span class="switch-label" data-on="4.88" data-off="4.88"></span> </label></div>
+<div class="div216"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678719600_Floor heating" checked/><span class="switch-handle"></span><span class="switch-label" data-on="3.48" data-off="3.48"></span> </label></div>
+<div class="div217"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678723200_Floor heating" checked/><span class="switch-handle"></span><span class="switch-label" data-on="5.21" data-off="5.21"></span> </label></div>
+<div class="div218"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678726800_Floor heating"/><span class="switch-handle"></span><span class="switch-label" data-on="5.77" data-off="5.77"></span> </label></div>
+<div class="div219"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678730400_Floor heating" checked/><span class="switch-handle"></span><span class="switch-label" data-on="5.38" data-off="5.38"></span> </label></div>
+<div class="div220"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678734000_Floor heating" checked/><span class="switch-handle"></span><span class="switch-label" data-on="4.82" data-off="4.82"></span> </label></div>
+<div class="div221"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678737600_Floor heating" checked/><span class="switch-handle"></span><span class="switch-label" data-on="4.64" data-off="4.64"></span> </label></div>
+<div class="div222"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678741200_Floor heating" checked/><span class="switch-handle"></span><span class="switch-label" data-on="3.81" data-off="3.81"></span> </label></div>
+<div class="devices">Car charger </div>
+<div class="div223"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678658400_Car charger" checked/><span class="switch-handle"></span><span class="switch-label" data-on="7.15" data-off="7.15"></span> </label></div>
+<div class="div224"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678662000_Car charger" checked/><span class="switch-handle"></span><span class="switch-label" data-on="5.48" data-off="5.48"></span> </label></div>
+<div class="div225"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678665600_Car charger" checked/><span class="switch-handle"></span><span class="switch-label" data-on="4.31" data-off="4.31"></span> </label></div>
+<div class="div226"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678669200_Car charger" checked/><span class="switch-handle"></span><span class="switch-label" data-on="3.8" data-off="3.8"></span> </label></div>
+<div class="div227"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678672800_Car charger" checked/><span class="switch-handle"></span><span class="switch-label" data-on="3.35" data-off="3.35"></span> </label></div>
+<div class="div228"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678676400_Car charger" checked/><span class="switch-handle"></span><span class="switch-label" data-on="4.12" data-off="4.12"></span> </label></div>
+<div class="div229"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678680000_Car charger" checked/><span class="switch-handle"></span><span class="switch-label" data-on="6.54" data-off="6.54"></span> </label></div>
+<div class="div230"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678683600_Car charger"/><span class="switch-handle"></span><span class="switch-label" data-on="10.13" data-off="10.13"></span> </label></div>
+<div class="div231"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678687200_Car charger"/><span class="switch-handle"></span><span class="switch-label" data-on="11.46" data-off="11.46"></span> </label></div>
+<div class="div232"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678690800_Car charger"/><span class="switch-handle"></span><span class="switch-label" data-on="11.46" data-off="11.46"></span> </label></div>
+<div class="div233"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678694400_Car charger"/><span class="switch-handle"></span><span class="switch-label" data-on="10.64" data-off="10.64"></span> </label></div>
+<div class="div234"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678698000_Car charger"/><span class="switch-handle"></span><span class="switch-label" data-on="11.41" data-off="11.41"></span> </label></div>
+<div class="div235"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678701600_Car charger"/><span class="switch-handle"></span><span class="switch-label" data-on="11.01" data-off="11.01"></span> </label></div>
+<div class="div236"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678705200_Car charger"/><span class="switch-handle"></span><span class="switch-label" data-on="11.45" data-off="11.45"></span> </label></div>
+<div class="div237"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678708800_Car charger"/><span class="switch-handle"></span><span class="switch-label" data-on="11.45" data-off="11.45"></span> </label></div>
+<div class="div238"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678712400_Car charger"/><span class="switch-handle"></span><span class="switch-label" data-on="9.62" data-off="9.62"></span> </label></div>
+<div class="div239"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678716000_Car charger" checked/><span class="switch-handle"></span><span class="switch-label" data-on="4.88" data-off="4.88"></span> </label></div>
+<div class="div240"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678719600_Car charger" checked/><span class="switch-handle"></span><span class="switch-label" data-on="3.48" data-off="3.48"></span> </label></div>
+<div class="div241"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678723200_Car charger" checked/><span class="switch-handle"></span><span class="switch-label" data-on="5.21" data-off="5.21"></span> </label></div>
+<div class="div242"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678726800_Car charger" checked/><span class="switch-handle"></span><span class="switch-label" data-on="5.77" data-off="5.77"></span> </label></div>
+<div class="div243"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678730400_Car charger" checked/><span class="switch-handle"></span><span class="switch-label" data-on="5.38" data-off="5.38"></span> </label></div>
+<div class="div244"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678734000_Car charger" checked/><span class="switch-handle"></span><span class="switch-label" data-on="4.82" data-off="4.82"></span> </label></div>
+<div class="div245"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678737600_Car charger" checked/><span class="switch-handle"></span><span class="switch-label" data-on="4.64" data-off="4.64"></span> </label></div>
+<div class="div246"><label class="switch switch-yes-no"><input class="switch-input" type="checkbox" name="1678741200_Car charger" checked/><span class="switch-handle"></span><span class="switch-label" data-on="3.81" data-off="3.81"></span> </label></div>
+</div><br>
+<input style="background-color: #32B532;" type="submit" value="SAVE" name="action"><br><input style="background-color: #F7CA00;" type="submit" value="RELOAD" name="action"/>
+</form>
+</body>
+</html>

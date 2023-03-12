@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+ <head>
+  <title>
+   ClickClack Schedule
+  </title>
+<style>
+
+div.parent {
+	font-family: "Calibri";
+	font-size: 17px;
+	vertical-align: middle;
+	margin: 0;
+	height: 100%;
+	border: 0;
+}
+
+div {
+	font-family: "Calibri";
+	font-size: 17px;
+	vertical-align: middle;
+	text-align: center;
+	margin: 0 auto;
+	padding-top: 3px;
+	width: 60px;
+	height: 27px;
+	border-right: 1px solid black;
+}
+
+div.devices {
+	width: 140px;
+	height: 27px;
+	align: left;
+	margin: 0 0 0 10px;
+	text-align: left;
+	padding: 3px 0 0 0px;
+	vertical-align: middle;
+}
+
+div.date {
+	width: 150px;
+	height: 27px;
+	align: left;
+	margin: 0;
+	padding-top: 3px;
+	text-align: left;
+	font-weight: bold;
+	vertical-align: middle;
+}
+
+.switch {
+	position: relative;
+	left: 5px;
+	display: block;
+	vertical-align: top;
+	width: 50px;
+	height: 27px;
+	background: linear-gradient(to bottom, #eeeeee, #FFFFFF 25px);
+	background-image: -webkit-linear-gradient(top, #eeeeee, #FFFFFF 25px);
+	border-radius: 18px;
+	cursor: pointer;
+	box-sizing:content-box;
+}
+.switch-input {
+	position: absolute;
+	top: 0;
+	left: 0;
+	opacity: 0;
+	box-sizing:content-box;
+}
+.switch-label {
+	position: relative;
+	display: block;
+	height: inherit;
+	font-size: 15px;
+	font-family: "Calibri";
+	text-transform: uppercase;
+	background: #eceeef;
+	border-radius: inherit;
+	box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.12), inset 0 0 2px rgba(0, 0, 0, 0.15);
+	box-sizing:content-box;
+}
+.switch-label:before, .switch-label:after {
+	position: absolute;
+	top: 50%;
+	-webkit-transition: inherit;
+	-moz-transition: inherit;
+	-o-transition: inherit;
+	transition: inherit;
+	box-sizing:content-box;
+}
+.switch-label:before {
+	content: attr(data-off);
+	right: 11px;
+	color: #555555;
+	text-shadow: 1px 1px #EEEEEE;
+}
+.switch-label:after {
+	content: attr(data-on);
+	left: 11px;
+	color: #FFFFFF;
+	text-shadow: 1px 1px #555555;
+	opacity: 0;
+}
+.switch-input:checked ~ .switch-label {
+	background: #E1B42B;
+}
+.switch-input:checked ~ .switch-label:before {
+	opacity: 0;
+}
+.switch-input:checked ~ .switch-label:after {
+	opacity: 1;
+}
+.switch-handle {
+	position: absolute;
+	top: 4px;
+	left: 4px;
+	width: 28px;
+	height: 28px;
+	background: linear-gradient(to bottom, #FFFFFF 40%, #f0f0f0);
+	background-image: -webkit-linear-gradient(top, #FFFFFF 40%, #f0f0f0);
+	border-radius: 100%;
+
+}
+.switch-handle:before {
+	content: "";
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 12px;
+	height: 12px;
+	background: linear-gradient(to bottom, #eeeeee, #FFFFFF);
+	background-image: -webkit-linear-gradient(top, #eeeeee, #FFFFFF);
+	border-radius: 6px;
+	box-shadow: inset 0 1px rgba(0, 0, 0, 0.02);
+}
+.switch-input:checked ~ .switch-handle {
+	left: 74px;
+	box-shadow: -1px 1px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* Transition
+========================== */
+.switch-label, .switch-handle {
+	transition: All 0.3s ease;
+	-webkit-transition: All 0.3s ease;
+	-moz-transition: All 0.3s ease;
+	-o-transition: All 0.3s ease;
+}
+
+/* Switch Yes No
+==========================*/
+.switch-yes-no {
+	padding: 0;
+	margin: 0;
+	background: #FFF;
+	border-radius: 0;
+	background-image: none;
+}
+.switch-yes-no .switch-label {
+	box-shadow: none;
+	background: none;
+}
+.switch-yes-no .switch-label:after, .switch-yes-no .switch-label:before {
+	width: 100%;
+	height: 100%;
+	top: 0;
+	left: 0;
+	text-align: center;
+	vertical-align: middle;
+	padding-top: 3px;
+	box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.2), inset 0 0 3px rgba(0, 0, 0, 0.1);
+}
+.switch-yes-no .switch-label:after {
+	color: #FFFFFF;
+	background: #32BA32;
+	backface-visibility: hidden;
+	transform: rotateY(180deg);
+	font-weight: bold;
+	font-size: 17px;
+}
+.switch-yes-no .switch-label:before {
+	background: #eceeef;
+	backface-visibility: hidden;
+}
+.switch-yes-no .switch-handle {
+	display: none;
+}
+.switch-yes-no .switch-input:checked ~ .switch-label {
+	background: #FFF;
+	border-color: #0088cc;
+}
+.switch-yes-no .switch-input:checked ~ .switch-label:before {
+	transform: rotateY(180deg)
+}
+.switch-yes-no .switch-input:checked ~ .switch-label:after {
+	transform: rotateY(0)
+}
+
+body {
+  font-family: "Calibri";
+}
+
+input[type=submit]{
+  text-shadow: 1px 1px 2px #555555;
+  color: white;
+  text-decoration: none;
+  margin: 10px 10px 0 0;
+  cursor: pointer;
+  width: 120px;
+  height: 35px;
+  font-size: 17px;
+  font-weight: bold;
+  font-family: "Calibri";
+}

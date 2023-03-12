@@ -13,7 +13,6 @@ from aux import settime
 from aux import errorhandler
 from aux import infohandler
 
-# All times handled in UTC!
 schedule1 = {}
 utime1 = []
 errorcode = 0
@@ -108,8 +107,8 @@ def start():
         while n != len(utime1):  # Set current setting on startup
             if not utime1[n] > timenow and (utime1[n] + 3600) > timenow:  # One hour setting
                 currentchange = int(utime1[n])
-                infohandler("Init. This Update --> Schedule: " + datetime.datetime.utcfromtimestamp(
-                    currentchange + settime(tz)).strftime('%H:%M (%Y-%m-%d)'))
+                infohandler("Init. This Update --> Schedule: " + datetime.datetime.fromtimestamp(
+                    currentchange).strftime('%H:%M (%Y-%m-%d)'))
                 for each in schedule1[currentchange]:
                     if devicestate[each] == 0 or devicestate[each] == 2:
                         infohandler("Switch on " + str(each))  # Set stage device was off
@@ -143,7 +142,7 @@ def start():
 
         if currentchange == 30:  # Current change was not found, assume all Off
             infohandler("Initial Update: All off. --> Time now: " +
-                        datetime.datetime.utcfromtimestamp(time.time() + settime(tz)).strftime('%H:%M (%Y-%m-%d)'))
+                        datetime.datetime.fromtimestamp(time.time()).strftime('%H:%M (%Y-%m-%d)'))
             currentchange = timenow
             for each in config:
                 if each == "DEFAULT":
@@ -181,8 +180,8 @@ def start():
                 elif changeorigin == "f":
                     infohandler("Webchange was initiated, no next schedule found, fixed days.")
         else:
-            infohandler("Init. Next Update, --> Schedule: " + datetime.datetime.utcfromtimestamp(
-                nextchange + settime(tz)).strftime('%H:%M'))
+            infohandler("Init. Next Update, --> Schedule: " + datetime.datetime.fromtimestamp(
+                nextchange).strftime('%H:%M'))
             infohandler("Switch on " + str(schedule1[nextchange]))
 
     init()
@@ -194,9 +193,9 @@ def start():
                 nextchange = 30
                 errorcode = 24
                 continue
-            infohandler("This Update -> Time now:" + datetime.datetime.utcfromtimestamp(
-                time.time() + settime(tz)).strftime('%H:%M (%Y-%m-%d)') + " Scheduled: "
-                        + datetime.datetime.utcfromtimestamp(nextchange + settime(tz)).strftime('%H:%M (%Y-%m-%d)'))
+            infohandler("This Update -> Time now:" + datetime.datetime.fromtimestamp(
+                time.time()).strftime('%H:%M (%Y-%m-%d)') + " Scheduled: "
+                        + datetime.datetime.fromtimestamp(nextchange).strftime('%H:%M (%Y-%m-%d)'))
             for each in schedule1[nextchange]:
                 if devicestate[each] == 0 or devicestate[each] == 2:
                     infohandler("Switch on " + str(each))  # Set stage device was off
@@ -228,13 +227,13 @@ def start():
                 if next > currentchange:
                     nextchange = next
                     errorcode = 0
-                    infohandler("Next Update --> Time now: " + datetime.datetime.utcfromtimestamp(
-                        time.time() + settime(tz)).strftime('%H:%M') + " Scheduled: "
-                                + datetime.datetime.utcfromtimestamp(nextchange + settime(tz)).strftime('%H:%M'))
+                    infohandler("Next Update --> Time now: " + datetime.datetime.fromtimestamp(
+                        time.time()).strftime('%H:%M') + " Scheduled: "
+                                + datetime.datetime.fromtimestamp(nextchange).strftime('%H:%M'))
                     break
         elif int(time.time()) > (currentchange + 3600) and allOff == 0:
-            infohandler("This Update. --> " + datetime.datetime.utcfromtimestamp(
-                time.time() + settime(tz)).strftime('%H:%M (%Y-%m-%d)'))
+            infohandler("This Update. --> " + datetime.datetime.fromtimestamp(
+                time.time()).strftime('%H:%M (%Y-%m-%d)'))
             for each in config:
                 if each == "DEFAULT":
                     continue
@@ -254,8 +253,8 @@ def start():
 
         if nextchange == 30:
             if errorcode == 22:  # We are here the second time, so init and schedulecreation has failed
-                currentchangeday = (datetime.datetime.utcfromtimestamp(currentchange + settime(tz)).strftime('%Y-%m-%d %H:%M'))
-                currentday = (datetime.datetime.utcfromtimestamp(time.time() + settime(tz)).strftime('%Y-%m-%d %H:%M'))
+                currentchangeday = (datetime.datetime.fromtimestamp(currentchange).strftime('%Y-%m-%d %H:%M'))
+                currentday = (datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M'))
                 midnight = datetime.datetime.combine(datetime.datetime.today(), datetime.datetime.max.time())
                 crondate = midnight.replace(hour=int(cron), minute=0, second=0, microsecond=0)
                 now = datetime.datetime.today()
@@ -315,17 +314,17 @@ def start():
                         key = 0
                         pass
                     nextchange = int(key)
-                    infohandler("Next Update --> Time now: " + datetime.datetime.utcfromtimestamp(
-                        time.time() + settime(tz)).strftime('%H:%M') + " Scheduled: "
-                                + datetime.datetime.utcfromtimestamp(nextchange + settime(tz)).strftime('%H:%M'))
+                    infohandler("Next Update --> Time now: " + datetime.datetime.fromtimestamp(
+                        time.time()).strftime('%H:%M') + " Scheduled: "
+                                + datetime.datetime.fromtimestamp(nextchange).strftime('%H:%M'))
                 continue
         # Reload at set time
-        elif int((datetime.datetime.utcfromtimestamp(time.time() + settime(tz)).strftime('%H'))) == int(cron):
-            if previousupdate != (int((datetime.datetime.utcfromtimestamp(time.time() + settime(tz)).strftime('%d')))):
+        elif int((datetime.datetime.fromtimestamp(time.time()).strftime('%H'))) == int(cron):
+            if previousupdate != (int((datetime.datetime.fromtimestamp(time.time()).strftime('%d')))):
                 aux.infohandler("Periodical schedule creation")  # JOS on WB edit
                 reload()
                 init()
-                previousupdate = (int((datetime.datetime.utcfromtimestamp(time.time() + settime(tz)).strftime('%d'))))
+                previousupdate = (int((datetime.datetime.fromtimestamp(time.time()).strftime('%d'))))
                 continue
 
         # Check if schedule has been updated

@@ -1,14 +1,20 @@
 import pickle
-import schedulecreator
-import publish
 import configparser
 import sys
+import os
 from flask import *
-from aux import messagehandler, settime, sendhtml, errorhandler
 from datetime import datetime
 from flask_httpauth import HTTPBasicAuth
 from werkzeug.security import generate_password_hash, check_password_hash
+import time
 
+abspath = os.path.abspath(__file__)
+dname = os.path.dirname(abspath)
+os.chdir(dname)
+
+sys.path.append("..")
+import publish
+from aux import messagehandler, settime, sendhtml, errorhandler
 # Edit these:
 port = 5050
 bindIP = "0.0.0.0"
@@ -34,6 +40,7 @@ except Exception as e:
 
 auth = HTTPBasicAuth()
 
+oldtime = 0
 
 @auth.verify_password
 def verify_password(username, password):
@@ -45,9 +52,11 @@ def verify_password(username, password):
 @app.route("/", methods=["GET", "POST"])
 @auth.login_required
 def home():
+    global oldtime
     updatedict = {}
+    updatedict.clear()
     if request.method == "POST":
-        if request.form.get('action') == 'save':
+        if request.form.get('action').upper() == 'SAVE':
             dict = request.form.to_dict()
             del dict['action']
             for each in dict:
@@ -56,6 +65,12 @@ def home():
                     updatedict[int(value[0])] = [value[1]]
                 else:
                     updatedict[int(value[0])].append(value[1])
+
+            # Sort hours, annoying dic....
+            dkeys = list(updatedict.keys())
+            dkeys.sort()
+            updatedict = {i: updatedict[i] for i in dkeys}
+
             try:
                 with open('data/schedule1.pkl', 'wb') as f:  # Full schedule
                     pickle.dump(updatedict, f)
@@ -80,7 +95,7 @@ def home():
             price = ""
 
             for key in updatedict:  # This moments settings
-                t = datetime.utcfromtimestamp(key + settime(tz))
+                t = datetime.fromtimestamp(key)
                 t = t.strftime('%Y-%m-%d %H:%M:%S %Z')
                 for each in pricelist:
                     if (int(each[0])) == int(key):
@@ -98,10 +113,19 @@ def home():
                 messagehandler(hrsched)
             return render_template("web.html")
 
-        if request.form.get('action') == 'reload':
+        if request.form.get('action').upper() == 'RELOAD':
             print("Reload")
-            schedulecreator.main()
-        return render_template("web.html")
+            ti_m = int(os.path.getctime('webedit/templates/web.html'))
+            os.system('python3 schedulecreator.py')
+            # Check if schedule has been updated
+            a = 10
+            while a != 0:
+                if ti_m == int(os.path.getctime('webedit/templates/web.html')):
+                    time.sleep(1)  # let filesystem settle down
+                    a = a - 1
+                else:
+                    break
+            return render_template("web.html")
     return render_template("web.html")
 
 

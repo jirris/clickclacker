@@ -9,7 +9,6 @@ import static
 import time
 from datetime import datetime
 from datetime import timedelta
-from aux import settime
 from aux import errorhandler
 from aux import infohandler
 from aux import messagehandler
@@ -105,12 +104,18 @@ def windcurve(device, day, temperature):  # Adds windchill factor by calculating
                 raise Exception
             windD = (windfile["wind"]["today_dir"])
             windS = float(windfile["wind"]["today_spd"])
-        else:
+        elif day == 1:
             # Tomorrow
             if windfile["wind"]["tomorrow_dir"] == "" or windfile["wind"]["tomorrow_spd"] == "":
                 raise Exception
             windD = (windfile["wind"]["tomorrow_dir"])
             windS = float(windfile["wind"]["tomorrow_spd"])
+        elif day == 2:
+            # Dayaftertomorrow
+            if windfile["wind"]["dayaftertomorrow_dir"] == "" or windfile["wind"]["dayaftertomorrow_spd"] == "":
+                raise Exception
+            windD = (windfile["wind"]["dayaftertomorrow_dir"])
+            windS = float(windfile["wind"]["dayaftertomorrow_spd"])
     except Exception as e:
         errorhandler("Wind file not found, default to no adjustment", e, 1)
         return 0
@@ -147,6 +152,7 @@ def windcurve(device, day, temperature):  # Adds windchill factor by calculating
 def averageT(device):
     try:
         temp_file = config["DEFAULT"]["temp_file"]
+        charge = config.get(device, 'capacitive', fallback="n")
         tempfile.read(temp_file)
         # Today
         if tempfile["temperature"]["today"] == "":
@@ -156,13 +162,20 @@ def averageT(device):
         if tempfile["temperature"]["tomorrow"] == "":
             raise Exception
         tomorrow = float(tempfile["temperature"]["tomorrow"])
+        if tempfile["temperature"]["dayaftertomorrow"] == "":
+            raise Exception
+        dayaftertomorrow = float(tempfile["temperature"]["tomorrow"])
         if config[device]["adj_chill"] == "y":
             today = today + windcurve(device, 0, today)
             tomorrow = tomorrow + windcurve(device, 1, tomorrow)
+            dayaftertomorrow = dayaftertomorrow + windcurve(device, 2, dayaftertomorrow)
     except Exception as e:
         errorhandler("Temperature file not found, default to no adjustment", e, 1)
         return None
-    return today, tomorrow
+    if charge == "y":
+        return tomorrow, dayaftertomorrow
+    else:
+        return today, tomorrow
 
 
 # Main
@@ -346,7 +359,8 @@ def main():
     temp_schedule = {i: schedule1[i] for i in dkeys}
 
     for key in temp_schedule:   # This moments settings
-        t = datetime.utcfromtimestamp(key + settime(tz))
+        #t = datetime.utcfromtimestamp(key + settime(tz))
+        t = datetime.fromtimestamp(key)
         t = t.strftime('%Y-%m-%d %H:%M:%S %Z')
         for each in pricelist:
             if (int(each[0])) == int(key):
