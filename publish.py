@@ -10,6 +10,46 @@ abspath = os.path.abspath(__file__)
 dname = os.path.dirname(abspath)
 os.chdir(dname)
 
+def settingspage():
+    config = configparser.ConfigParser()
+    try:
+        config.read('conf/devices.conf')
+    except Exception as e:
+        aux.errorhandler("Config not found on publisher", e, 2)
+        sys.exit()
+    css = "table, th, td {" \
+          "border: 1px solid black;" \
+          "border-collapse: collapse;" \
+          "border-color: #96D4D4;}"
+
+    html =  "<!DOCTYPE HTML><html lang=\"fi\"><head><title>Clickclack settings</title></head><style>" + css + "</style><body><form method=\"post\"><table border=\"3\" class=\"dataframe\">\n"
+
+    for each in config:
+        html = html + "<tr><td colspan=\"2\"><br/></td></tr><th colspan=\"2\"><u><b>" + each + "</b></u></th>\n"
+        print(str(each))
+        for set in config[each]:
+            try:
+                if config["DEFAULT"][set] != config[each][set]:
+                    html = html + "<tr><td>" + str(set) + "</td><td><input size=\"50\" type=\"text\" id=\"" + str(each + "." + set) + "\" name=\"" + str(each + "." + set) + "\" value=\"" + str(config[each][set]) + "\"/></td></tr>\n"
+                    print(set + ": " + config[each][set])
+                else:
+                    if each == "DEFAULT":
+                        html = html + "<tr><td>" + str(set) + "</td><td><input size=\"50\" type=\"text\" id=\"" + str(each + "." + set) + "\" name=\"" + str(each + "." + set) + "\" value=\"" + str(config[each][set]) + "\"/></td></tr>\n"
+            except:
+                print(set + ": " + config[each][set])
+                html = html + "<tr><td>" + str(set) + "</td><td><input size=\"50\" type=\"text\" id=\"" + str(each + "." + set) + "\" name=\"" + str(each + "." + set) + "\" value=\"" + str(config[each][set]) + "\"/></td></tr>\n"
+
+    html = html + "</table><br/><input name=\"action\" type=\"submit\" value=\"SAVE\"></form></body></html>"
+
+    try:
+        f = open("webedit/templates/settings.html", "w")
+        f.write(html)
+        f.close()
+    except Exception as e:
+        aux.errorhandler("File write failed", str(e), 2)
+        return 0
+
+
 
 def webpage2(table):
     columns = int((len(table[0]) - 1) / 2 + 1)  # Remove header and add one per table
@@ -157,11 +197,30 @@ def webpage2(table):
             divnr = divnr + 1
             hour = hour + 1
 
-    #html = html + '<input style=\"background-color: #32B532;\" type=\"submit\" value=\"SAVE\" name=\"action\">Save and apply changes' \
-    #              '<br><input style\"background-color: #F7CA00;\" type=\"submit\" value=\"RELOAD\" name=\"action\"/>Reset and reload schedule'
+    config = configparser.ConfigParser()
+    try:
+        config.read('conf/devices.conf')
+        soldevices = ""
+        for each in config:
+            if config.get(each, "solaronly", fallback="n").lower() == "y":
+                currentM = datetime.today().strftime("%-m")
+                listM = config.get(each, "solaronlymonths", fallback=0)
+                if currentM in listM:
+                    soldevices = soldevices + "," + each
 
-    html = html + '</div><br>\n<input style=\"background-color: #32B532;\" type=\"submit\" value=\"SAVE\" name=\"action\">' \
-                  '<br><input style=\"background-color: #F7CA00;\" type=\"submit\" value=\"RELOAD\" name=\"action\"/>\n</form>\n</body>\n</html>'
+    except Exception as e:
+        aux.errorhandler("Config not found on publisher", e, 2)
+        soldevices = ""
+        pass
+
+    if len(soldevices) > 1:
+        html = html + '</div><br/><b>Devices: ' + soldevices[1:] + ' overrided with sun power.</b><br>\n<input style=\"background-color: #32B532;\" type=\"submit\" value=\"Save\" name=\"action\">' \
+                      '<br><input style=\"background-color: #F7CA00;\" type=\"submit\" value=\"Reset\" name=\"action\"/>\n</form>\n' \
+                      '<form><input type=\"submit\" name=\"reload\" value=\"Reload\"></form></body>\n</html>'
+    else:
+        html = html + '</div><br>\n<input style=\"background-color: #32B532;\" type=\"submit\" value=\"Save\" name=\"action\">' \
+                      '<br><input style=\"background-color: #F7CA00;\" type=\"submit\" value=\"Reset\" name=\"action\"/>\n</form>\n' \
+                      '<form><input type=\"submit\" name=\"reload\" value=\"Reload\"></form></body>\n</html>'
     try:
         f = open("webedit/templates/web.html", "w")
         f.write(html)
@@ -171,38 +230,59 @@ def webpage2(table):
         return 0
 
 def htmlcreator(table):
-    html = '<table border=\"1\" class=\"dataframe\"><thead><tr style=\"text-align: right;\">'
+    html = '<!DOCTYPE html><html lang="en"><head><title>ClickClack schedule</title></head><table border=\"1\" class=\"dataframe\"><thead><tr style=\"text-align: right;\">' + '\n'
+    html2 = '<table border=\"1\" class=\"dataframe\"><thead><tr style=\"text-align: right;\">' + '\n'
     prevdate = ""
     # print(cell[8:10] + '.' + cell[5:7] + cell[10:]
+
+    tablecount = 0
 
     for cell in table[0]:
         dat = cell[:10]
         if cell == "Devices":
             html = html + '<th>' + cell + '</th>'
+            html2 = html2 + '<th>' + cell + '</th>'
         elif dat == prevdate:
-            html = html + '<th>' + cell[10:13] + '</th>'
+            if tablecount == 1:
+                html = html + '<th>' + cell[10:13] + '</th>'
+            elif tablecount == 2:
+                html2 = html2 + '<th>' + cell[10:13] + '</th>'
         else:
-            html = html + '<th>' + cell[8:10] + '.' + cell[5:7] + cell[10:] + '</th>'
+            if tablecount == 0:
+                html = html + '<th>' + cell[8:10] + '.' + cell[5:7] + cell[10:] + '</th>'
+                tablecount = 1
+            else:
+                html2 = html2 + '<th>' + cell[8:10] + '.' + cell[5:7] + cell[10:] + '</th>'
+                tablecount = 2
         prevdate = dat
-    html = html + '</tr></thead><tbody><tr>'
+    html = html + '</tr></thead><tbody>' + '\n'
+    html2 = html2 + '</tr></thead><tbody>' + '\n'
 
     rownr = 0
+    content = ""
 
     for row in table:
+        cnr = 0
         if rownr == 0:
             rownr = rownr + 1
             continue
-        html = html + '<tr>'
+        content = content + '<tr>'
         for cell in row:
+            cnr = cnr + 1
+            if cnr == 26:
+                html = html + content + "</tr>" + '\n'
+                content = ""
             if "off " in cell:
-                html = html + '<td>' + cell + '</td>'
+                content = content + '<td>' + cell + '</td>'
             elif "on " in cell:
-                html = html + '<td bgcolor=\"green\">' + cell + '</td>'
+                content = content + '<td bgcolor=\"green\">' + cell + '</td>'
             else:
-                html = html + '<td>' + cell + '</td>'
-        html = html + '</tr>'
+                content = content + '<td>' + cell + '</td>'
+                html2 = html2 + '<tr><td>' + cell + '</td>'
+        html2 = html2 + content + '</tr>' + '\n'
+        content = ""
 
-    html = html + '</tbody></table>'
+    html = html + '</tbody></table>' + html2 + '</tbody></table>'
 
     try:
         f = open("data/schedule.html", "w")
@@ -232,7 +312,14 @@ def csvcreator(schedule1, pricelist):
     schedule_first = list(sorted_schedule)[0]
     time = schedule_first
 
+    first_hour = datetime.fromtimestamp(time).hour
     headerrow = ["Devices"]
+
+    while first_hour != 0:
+        correcttime = schedule_first - 3600
+        headerrow.append(correcttime)
+        first_hour = first_hour - 1
+
 
     while time <= schedule_last:
         headerrow.append(time)
@@ -320,3 +407,6 @@ def csvcreator(schedule1, pricelist):
     except Exception as e:
         aux.errorhandler("File write failed", str(e), 1)
         return 0
+
+if __name__ == '__main__':
+    settingspage()

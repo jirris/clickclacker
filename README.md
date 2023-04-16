@@ -7,8 +7,9 @@ Usecase examples:
 - Controlling water heater to heat during cheap hours
 - Controlling Inverters to change setting or go on/off based on price (see for example mecloud in Github)
 - Controlling car charger to charge only during cheap hours (tested with Webasto charging stations)
+- Set loads on when Solarenergy is available
   
--------INSTALLATION--------------
+-------INSTALLATION-------------
   
 Prequisites:
 - Python3
@@ -17,7 +18,8 @@ Prequisites:
   - configparser
   - lxml (note in Rasbian you have to install this with apt-get install python3-lxml, this installs also bs4). 
   - nordpool, if you plan to use Nordpool script in tools instead of Entsoe.
-  - Flask & waitress, if you plan to use webeditor (small and bad), check readme.md in webedit folder
+  - Flask, waitress and flask_httpauth, if you plan to use webeditor (small and bad), check readme.md in webedit folder
+  - discord_webhook, if you want to use discord for messages
   
 Install with: pip3 install library  
   
@@ -43,6 +45,7 @@ Today.json —> Todays prices for electricity in JSON format. Tagnames can be se
 Tomorrow.json —> Tomorrows prices.  
 Temperature —> Temperature forecasts for today and tomorrow as average.  
 Wind —> wind forecast in m/s as speed and lowercase English acronyms for direction (n, ne, e, se, s, sw, w, nw).  
+currentW -> If used, the current Wattage from solarpanels, checked when file changes.
     
 You can use your own scripts to create these files (see devices.conf/fetch.sh) in json or use static files, if you want heating to hit to same hours every day.  
 For spotprices there is also a alternative to use Entso-e site, see more information in devices.conf
@@ -98,3 +101,4 @@ With great GitHub projects:
 - Panasonic inverter (https://github.com/lostfields/python-panasonic-comfort-cloud)
 - Gree inverter (https://github.com/tomikaa87/gree-remote)
 - Deltaco smartplug (https://github.com/jasonacox/tinytuya)
+- Grott for Growatt inverters (https://github.com/johanmeijer/grott)

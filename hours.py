@@ -1,6 +1,7 @@
 import json
 import aux
 import datetime
+from datetime import datetime as dt
 import time
 from bs4 import BeautifulSoup as bs
 import requests
@@ -26,10 +27,14 @@ try:
     etoken = config["DEFAULT"]["etoken"]
     ecountry = config["DEFAULT"]["ecountry"]
     tz = float(config["DEFAULT"]["timezone"])
+    tax = float(config["DEFAULT"]["tax"])
+
+    tz = int(aux.settime(tz)[1])
 
 except Exception as e:
     aux.errorhandler("Hours: Config not found", e, 2)
     exit()
+
 
 def priorities(table, device, nhours):
     try:
@@ -45,7 +50,7 @@ def priorities(table, device, nhours):
     for digit in priorityhours:
         try:
             int(digit)
-            if int(digit) < 24 and int(digit) >= 0:
+            if 24 > int(digit) >= 0:
                 cleanhours.append(int(digit))
         except ValueError as x:
             errorhandler("Priority hour value error on " + device, x, 1)
@@ -67,6 +72,8 @@ def priorities(table, device, nhours):
             table2.append(key)
             nhours = nhours - 1
     return table2, nhours
+
+
 def priceLimit(table, device):
     a = 0
     result = []
@@ -107,13 +114,13 @@ def hoursJSON(day, hours, adj, device):
         return "error"
     table = []
 
-    origtime = datetime.datetime.strptime(data[1][json_date], '%Y-%m-%dT%H:%M:%S%z')
+    origtime = dt.strptime(data[1][json_date], '%Y-%m-%dT%H:%M:%S%z')
     origtime = (origtime.strftime("%Y-%m-%d"))
     comptime = (compdate.strftime("%Y-%m-%d"))
 
     if origtime == comptime:
         for key in data:
-            date_time = (datetime.datetime.strptime(key[json_date], '%Y-%m-%dT%H:%M:%S%z'))
+            date_time = (dt.strptime(key[json_date], '%Y-%m-%dT%H:%M:%S%z'))
             currenttz = datetime.timedelta(hours=tz)
             sourcetz = (date_time.utcoffset())
             correction = currenttz - sourcetz
@@ -132,15 +139,28 @@ def hoursJSON(day, hours, adj, device):
     table.sort()
 
     if config.get(device, 'force', fallback="n") == "y":
-        diff = int(config[device]["forceh"])
+        range = int(config.get(device, 'force_range', fallback="1"))
+        diff = int(config.get(device, 'forceh', fallback="1"))
 
         for extra in table:
             if count == diff:
                 if extra not in table2:
                     table2.append(extra)
+                    if range > 1:
+                        index = table.index(extra)
+                        a = 1
+                        while a != range and index + a < len(table):
+                            table2.append(table[index + a])
+                            a = a + 1
+                            nhours = nhours - 1
                     nhours = nhours - 1
                 count = 0
             count = count + 1
+
+    table.sort(key=lambda x: x[1])  # Sort by price
+
+    if nhours < 0:
+        nhours = 0
 
     # Priority hours
 
@@ -177,10 +197,10 @@ def hoursJSON(day, hours, adj, device):
 
 def ehours(day, hours, adj, device):
     data = []
+    table = []
     when = "tomorrow"
     skip = 0
 
-    offset = aux.settime(tz)  # Unixtime offset
     offset = 0
     if 1 <= hours <= 24:
         nhours = hours
@@ -189,16 +209,19 @@ def ehours(day, hours, adj, device):
     if day == 1:  # Today
         when = "today"
         basedate = datetime.datetime.now()
-        compdate = basedate
         xmlfile = "data/entsoe_today.xml"
     else:
         basedate = datetime.datetime.now() + datetime.timedelta(days=1)
-        compdate = basedate
         xmlfile = "data/entsoe_tomorrow.xml"
     start = basedate.replace(hour=0, minute=0, second=0, microsecond=0)
+    ustart = start.timestamp()
     end = basedate.replace(hour=23, minute=0, second=0, microsecond=0)
+
+    start = start + datetime.timedelta(hours=-(tz))
+    end = end + datetime.timedelta(hours=-(tz))
     start = start.strftime("%Y%m%d%H%M")
     end = end.strftime("%Y%m%d%H%M")
+
     url = "https://web-api.tp.entsoe.eu/api?securityToken=" + etoken + "&documentType=A44&in_Domain=" + \
           ecountry + "&out_Domain=" + ecountry + "&periodStart=" + start + "&periodEnd=" + end
 
@@ -213,9 +236,12 @@ def ehours(day, hours, adj, device):
                 skip = 0
             else:
                 startdate = data.find("start").text
-                origdate = (datetime.datetime.strptime(startdate, '%Y-%m-%dT%H:%MZ')
-                            + datetime.timedelta(hours=int(tz)))  # make sure we hit right day due timezones
-                if str(origdate.date()) == str(compdate.strftime("%Y-%m-%d")):
+                enddate = data.find("end").text
+                startdate = dt.strptime(startdate, "%Y-%m-%dT%H:%M%z")
+                startdate = int(startdate.timestamp())
+                enddate = dt.strptime(enddate, "%Y-%m-%dT%H:%M%z")
+                enddate = int(enddate.timestamp())
+                if (ustart + aux.settime(tz) * 3600) >= startdate and (ustart + aux.settime(tz) * 3600) < enddate:
                     skip = 1
     except:
         skip = 0
@@ -231,34 +257,34 @@ def ehours(day, hours, adj, device):
         except Exception as e:
             aux.errorhandler("Hours: Couldn't connect to site", e, 2)
             return "error"
-
     try:
-        prices = {}
-        table = []
-        if data.find("Point") is not None:
+        pricedata = []
+        periodlist = data.findAll("Period")
 
-            for row in data.findAll("Point"):
-                date = row.find("position").text
-                price = row.find("price.amount").text
-                price = float(price) / 10
+        for pr in periodlist:
+            sday = (pr.find("start").text)
+            sday = dt.strptime(sday, "%Y-%m-%dT%H:%M%z")
+            points = pr.findAll("Point")
+            for x in points:
+                price = x.find('price.amount')
+                price = float(price.text) / 10 * tax
                 price = round(price, 2)
-                prices.update({date: price})
+                pricedata.append((int(sday.timestamp()), price))
+                sday = sday + datetime.timedelta(hours=1)
 
-            startdate = data.find("start").text
-            enddate = data.find("end").text
+        need = 0
 
-            date_time = (datetime.datetime.strptime(startdate, '%Y-%m-%dT%H:%M%z') + datetime.timedelta(hours=int(tz)))
-            date_time = int((int(time.mktime(date_time.timetuple()))))
-
-            hour = 1
-
-            while hour < 25:  # Change position to unixtime
-                table.append((date_time, prices[str(hour)]))
-                date_time = date_time + 3600
-                hour = hour + 1
+        for each in pricedata:
+            if each[0] >= ustart:
+                table.append(each)
+                need = need + 1
+            if need == 24:
+                break
 
     except Exception as e:
-        aux.errorhandler("Hours: An exception occurred",e ,2)
+        if int(day) == 2:
+            return "error"
+        aux.errorhandler("Hours: An exception occurred ", str(e), 2)  # --> catastrofic fail
         return "error"
 
     table2 = []
@@ -268,21 +294,28 @@ def ehours(day, hours, adj, device):
     table.sort()
 
     if config.get(device, 'force', fallback="n") == "y":
-        try:
-            diff = int(config[device]["forceh"])
-        except Exception as e:
-            aux.errorhandler("Hours: Force configuration failure", e, 2)
-            return "error"
+        range = int(config.get(device, 'force_range', fallback="1"))
+        diff = int(config.get(device, 'forceh', fallback="1"))
 
         for extra in table:
             if count == diff:
                 if extra not in table2:
                     table2.append(extra)
+                    if range > 1:
+                        index = table.index(extra)
+                        a = 1
+                        while a != range and index + a < len(table):
+                            table2.append(table[index + a])
+                            a = a + 1
+                            nhours = nhours - 1
                     nhours = nhours - 1
                 count = 0
             count = count + 1
 
     table.sort(key=lambda x: x[1])  # Sort by price
+
+    if nhours < 0:
+        nhours = 0
 
     # Priority hours
 
@@ -339,5 +372,5 @@ def hours(day, hours, adj, device):
 
 
 if __name__ == '__main__':
-    print((ehours(1, 4, 0, "Inverter")))
-    #print((hoursJSON(1, 6, 0, "Inverter")))
+    print((ehours(2, 6, 0, "Volvo lataus")))
+    print((hoursJSON(2, 6, 0, "Volvo lataus")))

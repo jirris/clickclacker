@@ -14,7 +14,7 @@ os.chdir(dname)
 
 sys.path.append("..")
 import publish
-from aux import messagehandler, settime, sendhtml, errorhandler
+from aux import messagehandler, sendhtml, errorhandler
 # Edit these:
 port = 5050
 bindIP = "0.0.0.0"
@@ -72,7 +72,41 @@ def home():
             updatedict = {i: updatedict[i] for i in dkeys}
 
             try:
-                with open('data/schedule1.pkl', 'wb') as f:  # Full schedule
+                with open('data/schedule1.pkl', 'rb') as f:  # Full schedule
+                    oldsch = pickle.load(f)
+                    f.close()
+                    newkey = []
+                    for key in updatedict:
+                        if key not in oldsch:
+                            newkey.append(key)
+                            print("new item")
+                        else:
+                            if updatedict[key] != oldsch[key]:
+                                print("content change")
+                                newkey.append(key)
+
+                    for key in oldsch:
+                        if key not in updatedict:
+                            newkey.append(key)
+                            print("Item removed")
+                if len(newkey) == 0:
+                    return render_template("web.html")
+                lastitem = max(newkey)
+
+                try:
+                    f = open("data/lastitem", "r")
+                    oldkey = f.read()
+                    if oldkey == "":
+                        oldkey = 0
+                    f.close()
+                    f = open("data/lastitem", "w")
+                    if int(oldkey) < int(lastitem):
+                        f.write(str(lastitem))
+                    f.close()
+                except Exception:
+                    pass
+
+                with open('data/schedule1.pkl', 'wb') as f:
                     pickle.dump(updatedict, f)
                     f.close()
                     f = open("data/origin", "w")
@@ -80,15 +114,15 @@ def home():
                     f.close()
             except Exception as y:
                 errorhandler("Clickclack: Schedule file save failed", y, 0)
-                sys.exit()
+                return render_template("error.html")
 
             try:
-                with open('data/prices.pkl', 'rb') as f:  # Full schedule
+                with open('data/prices.pkl', 'rb') as f:
                     pricelist = pickle.load(f)
                     f.close()
             except Exception as y:
                 errorhandler("Clickclack: Pricelist open failed", y, 0)
-                sys.exit()
+                return render_template("error.html")
             publish.csvcreator(updatedict, pricelist)
 
             hrsched = ""
@@ -113,7 +147,7 @@ def home():
                 messagehandler(hrsched)
             return render_template("web.html")
 
-        if request.form.get('action').upper() == 'RELOAD':
+        if request.form.get('action').upper() == 'RESET':
             print("Reload")
             ti_m = int(os.path.getctime('webedit/templates/web.html'))
             os.system('python3 schedulecreator.py')
@@ -125,6 +159,8 @@ def home():
                     a = a - 1
                 else:
                     break
+            return render_template("web.html")
+    elif request.method == "GET":
             return render_template("web.html")
     return render_template("web.html")
 

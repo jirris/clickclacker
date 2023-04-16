@@ -23,6 +23,7 @@ config = configparser.ConfigParser()
 tempfile = configparser.ConfigParser()
 windfile = configparser.ConfigParser()
 
+
 def fixeddate(device, day):
     dates = config[device]["fixed_days_list"]
     dates = dates.split(",")
@@ -40,6 +41,7 @@ def fixeddate(device, day):
         return 1
     else:
         return 0
+
 
 def tempcurve(device, day):  # Calculate needed hours based on the average temperature per day
     # Change to Kelvins
@@ -83,13 +85,15 @@ def tempcurve(device, day):  # Calculate needed hours based on the average tempe
 
 
 def windcurve(device, day, temperature):  # Adds windchill factor by calculating speed (in m/s) times chill factor
+    windD = ""
+    windS = ""
     try:
         wind_file = config["DEFAULT"]["wind_file"]
         cutoff_temp = int(config[device]["cutoff_chill"])
+        windfile.read(wind_file)
     except Exception as e:
         aux.errorhandler("Configuration error", e, 2)
         return 0
-
     if temperature is None:  # No average temperature got
         return 0
 
@@ -97,7 +101,6 @@ def windcurve(device, day, temperature):  # Adds windchill factor by calculating
         return 0
 
     try:
-        windfile.read(wind_file)
         if day == 0:
             # Today
             if windfile["wind"]["today_dir"] == "" or windfile["wind"]["today_spd"] == "":
@@ -181,11 +184,10 @@ def averageT(device):
 # Main
 def main():
     schedule1 = {}
-    emptyschedule = 1
+    emptyschedule = 0
 
     try:
         config.read('conf/devices.conf')
-        tz = (int(config["DEFAULT"]["timezone"]))
     except Exception as e:
         errorhandler("Config not found on scheduler", e, 2)
         sys.exit()
@@ -239,7 +241,7 @@ def main():
                     infohandler(device + ": " + str(len(onhours2)) + "h")
                     infohandler("------")
 
-            if onhours1 == "error":
+            if onhours1 == "error" or onhours1 == None:
                 aux.errorhandler("Schedulecreator: No new price information got today", 0, 0)
                 return "error"
             else:
@@ -248,7 +250,7 @@ def main():
                         schedule1.update({int(hour[0]): []})
                     if device not in schedule1[hour[0]]:
                         schedule1[hour[0]].append(device)
-            if onhours2 == "error":
+            if onhours2 == "error" or onhours2 == None:
                 aux.errorhandler("Schedulecreator: No new price information got for tomorrow for " + device, 0, 0)
             else:
                 for hour in onhours2:
@@ -359,7 +361,6 @@ def main():
     temp_schedule = {i: schedule1[i] for i in dkeys}
 
     for key in temp_schedule:   # This moments settings
-        #t = datetime.utcfromtimestamp(key + settime(tz))
         t = datetime.fromtimestamp(key)
         t = t.strftime('%Y-%m-%d %H:%M:%S %Z')
         for each in pricelist:
@@ -391,7 +392,7 @@ def main():
             if emptyschedule != 0:
                 f.write("f")
             else:
-                f.write("s")
+                f.write("S")
             f.close()
         with open('data/prices.pkl', 'wb') as f:  # Pricelist
             pickle.dump(pricelist, f)

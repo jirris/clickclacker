@@ -7,10 +7,23 @@ import os
 import callmebot
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+import dwebhook
+
 
 # Takes option tz as timezone correction and returns localtime correction for unixtime
 
-
+def senddiscord(message):
+    config = configparser.ConfigParser()
+    returnvalue = 0
+    try:
+        config.read('conf/devices.conf')
+        url = (config["DEFAULT"]["webhook"])
+        returnvalue = dwebhook.senddiscord(url, message)
+    except Exception as e:
+        print("Discord message send failed" + str(e))
+        sys.exit()
+    if returnvalue != 0:
+        print("Discord message send failed" + returnvalue)
 def settime(tz):
     t = time.time()
     UTC_OFFSET = int(tz) * 60 * 60
@@ -29,9 +42,10 @@ def settime(tz):
         offset = UTC_OFFSET
     elif now < HHNovember:  # we are before last sunday of october
         offset = UTC_OFFSET + 3600
+        tz = tz + 1
     else:  # we are after last sunday of october
         offset = UTC_OFFSET
-    return offset
+    return offset, tz
 
 #  Email sender
 
@@ -49,7 +63,6 @@ def sendemail(msg, server, email, password):
 
 def errorhandler(msg, exp, code):
     config = configparser.ConfigParser()
-    returnvalue = 0
     try:
         config.read('conf/devices.conf')
         consoleon = (config["DEFAULT"]["consoleon"])
@@ -61,6 +74,7 @@ def errorhandler(msg, exp, code):
         log = (config["DEFAULT"]["log"])
         html = (config["DEFAULT"]["html"])
         callmebotset = (config["DEFAULT"]["callmebot"])
+        discord = (config["DEFAULT"]["discord"])
     except Exception as e:
         print("Config not found" + str(e))
         sys.exit()
@@ -85,6 +99,9 @@ def errorhandler(msg, exp, code):
                 returnvalue = callmebot.send_message(phone_number, api_key, message, service)
                 if returnvalue:
                     errorhandler(returnvalue, 0, 0)
+            if discord == "y":
+                message = "Clickclack running normally"
+                senddiscord(message)
         elif code == "info":
             if os.path.exists(log):
                 append_write = 'a'  # append if already exists
@@ -120,12 +137,37 @@ def errorhandler(msg, exp, code):
                 returnvalue = callmebot.send_message(phone_number, api_key, msg, service)
                 if returnvalue:
                     errorhandler(returnvalue, 0, 0)
+            if discord == "y":
+                senddiscord(msg)
+
     except Exception as e:
         print("Log write failed or email send failed " + str(e))
 
 # Information logger
 
+def notifier(msg):
+    config = configparser.ConfigParser()
+    try:
+        config.read('conf/devices.conf')
+        callmebotset = (config["DEFAULT"]["callmebot"])
+        discord = (config["DEFAULT"]["discord"])
+    except Exception as e:
+        print("Config not found" + str(e))
+        sys.exit()
 
+    try:
+        if callmebotset == "y":
+            phone_number = (config["DEFAULT"]["phone_number"])
+            api_key = (config["DEFAULT"]["api_key"])
+            service = (config["DEFAULT"]["service"])
+            returnvalue = callmebot.send_message(phone_number, api_key, msg, service)
+            if returnvalue:
+                errorhandler(returnvalue, 0, 0)
+        if discord == "y":
+            senddiscord(msg)
+    except Exception as e:
+        print("Message send failed: " + str(e))
+        sys.exit()
 def messagehandler(msg):
     errorhandler(msg, 0, "message")
 
@@ -138,14 +180,10 @@ def sendhtml():
     try:
         config = configparser.ConfigParser()
         config.read('conf/devices.conf')
-        consoleon = (config["DEFAULT"]["consoleon"])
         emailon = (config["DEFAULT"]["emailon"])
         email = (config["DEFAULT"]["email"])
         password = (config["DEFAULT"]["emailpassword"])
         server = (config["DEFAULT"]["emailserver"])
-        errorlog = (config["DEFAULT"]["errorlog"])
-        log = (config["DEFAULT"]["log"])
-        callmebotset = (config["DEFAULT"]["callmebot"])
     except Exception as e:
         print("Config not found " + str(e))
         sys.exit()
