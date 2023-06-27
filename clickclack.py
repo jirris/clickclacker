@@ -95,10 +95,16 @@ def solcheck(devs, watts):
                     solwattminon = int(config.get(each, "solarminon", fallback='30'))
                     if solstate[each] + solwattminon * 60 < time.time():
                         solstate[each] = "n"
-                        if devs[each] == 0 or config.get(each, "solaronly", fallback="n").lower() == "y":
-                            controller.switch(each, 0)
-                            aux.infohandler("Solar power under threshold " + str(watts/10) + "W, switch off " + each)
-                            aux.notifier("Solar power under threshold " + str(watts / 10) + "W, switch off " + each)
+                        if devs[each] == 0 or config.get(each, "solaronly", fallback="n").lower() == "y": # add month
+                            currentM = datetime.datetime.today().strftime("%-m")
+                            listM = config.get(each, "solaronlymonths", fallback=0)
+                            if currentM in listM:
+                                controller.switch(each, 0)
+                                aux.infohandler("Solar power under threshold " + str(watts/10) + "W, switch off " + each)
+                                aux.notifier("Solar power under threshold " + str(watts / 10) + "W, switch off " + each)
+                            else:
+                                aux.infohandler("Solar power under threshold " + str(watts/10) + "W, but schedule is on " + each)
+                                aux.notifier("Solar power under threshold " + str(watts / 10) + "W, sbut schedule is on " + each)
                     else:
                         pass
                         #aux.infohandler("Solar power under threshold " + str(watts) + ", keeping on for " + str(solwattminon) + " minutes")

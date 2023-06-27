@@ -27,7 +27,7 @@ try:
     etoken = config["DEFAULT"]["etoken"]
     ecountry = config["DEFAULT"]["ecountry"]
     tz = float(config["DEFAULT"]["timezone"])
-    tax = float(config["DEFAULT"]["tax"])
+    tax = float(config.get("DEFAULT", 'tax', fallback="0"))
 
     tz = int(aux.settime(tz)[1])
 
@@ -132,6 +132,25 @@ def hoursJSON(day, hours, adj, device):
             table.append(tuplev)
     else:
         return "error"
+
+    # Adding possible extra network cost per hour
+    if config.get(device, 'networkoffset', fallback="n") == "y":
+        tadd = []
+        networkosvalue = config.get(device, 'networkosvalue', fallback="0:0")
+        stringT = networkosvalue.split(",")
+
+        addprice = {}
+        for t in stringT:
+            addprice[int(t.split(":")[0])] = t.split(":")[1]
+
+        for each in table:
+            if dt.fromtimestamp(each[0]).hour in addprice:
+                tadd.append((each[0], round(float(each[1]) + float(addprice[dt.fromtimestamp(each[0]).hour]), 2)))
+            else:
+                tadd.append((each[0], each[1]))
+        table = tadd
+    #
+
     table2 = []
 
     # If force is used, add hours and remove those from needed hours to keep amount the same
@@ -287,6 +306,24 @@ def ehours(day, hours, adj, device):
         aux.errorhandler("Hours: An exception occurred ", str(e), 2)  # --> catastrofic fail
         return "error"
 
+    # Adding possible extra network cost per hour
+    if config.get(device, 'networkoffset', fallback="n") == "y":
+        tadd = []
+        networkosvalue = config.get(device, 'networkosvalue', fallback="0:0")
+        stringT = networkosvalue.split(",")
+
+        addprice = {}
+        for t in stringT:
+            addprice[int(t.split(":")[0])] = t.split(":")[1]
+
+        for each in table:
+            if dt.fromtimestamp(each[0]).hour in addprice:
+                tadd.append((each[0], round(float(each[1]) + float(addprice[dt.fromtimestamp(each[0]).hour]), 2)))
+            else:
+                tadd.append((each[0], each[1]))
+        table = tadd
+    #
+
     table2 = []
 
     # If force is used, add hours and remove those from needed hours to keep amount the same
@@ -372,5 +409,5 @@ def hours(day, hours, adj, device):
 
 
 if __name__ == '__main__':
-    print((ehours(2, 6, 0, "Volvo lataus")))
-    print((hoursJSON(2, 6, 0, "Volvo lataus")))
+    print((ehours(1, 6, 0, "Volvo lataus")))
+    print((hoursJSON(1, 6, 0, "Volvo lataus")))
