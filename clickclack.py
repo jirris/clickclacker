@@ -21,7 +21,7 @@ nextchange = 30
 devicestate = {}
 allOff = 0
 previousupdate = 0
-changeorigin = ""
+changeorigin = ""  # Reload done, Forced schedule only or Written by external web
 solstate = {}
 solcheckon = 0
 
@@ -39,6 +39,16 @@ try:
         if config.get(each, "solarwatt", fallback="n") == "y":
             solcheckon = 1
             solarwattfile = config.get(each, "solarwattfile", fallback="n")
+    # Remove old files
+    try:
+        os.remove("data/origin")
+    except FileNotFoundError:
+        pass
+    try:
+        os.remove("data/last")
+    except FileNotFoundError:
+        pass
+
 except Exception as e:
     errorhandler("Config not found", e, 2)
     exit()
@@ -69,7 +79,9 @@ def switcher(dev, state):
                 aux.infohandler("Solaronly setting in use " + dev + ", but not enabled this month.")
                 controller.switch(dev, state)
     elif state == 0:
-        if solstate[dev] == "n":
+        if dev == "backup":
+            controller.switch(dev, state)
+        elif solstate[dev] == "n":
             controller.switch(dev, state)
         else:
             aux.infohandler("Solaronly setting in use " + dev + ", switch off overriden.")
@@ -80,7 +92,6 @@ def solcheck(devs, watts):
     if not solstate:
         for each in devs:
             solstate[each] = "n"
-
     for each in solstate:
         if config.get(each, "solarwatt", fallback="n").lower() == "y":
             if int(config.get(each, "solarwattlimit", fallback=-1)) != -1:
@@ -95,16 +106,25 @@ def solcheck(devs, watts):
                     solwattminon = int(config.get(each, "solarminon", fallback='30'))
                     if solstate[each] + solwattminon * 60 < time.time():
                         solstate[each] = "n"
-                        if devs[each] == 0 or config.get(each, "solaronly", fallback="n").lower() == "y": # add month
+                        if devs[each] == 1 and config.get(each, "solaronly", fallback="n").lower() == "n":
+                            aux.infohandler("Solar power under threshold " + str(watts / 10) + "W, but schedule is on " + each)
+                            aux.notifier("Solar power under threshold " + str(watts / 10) + "W, but schedule is on " + each)
+                            controller.switch(each, 1)
+                        elif devs[each] == 1 and config.get(each, "solaronly", fallback="n").lower() == "y":
                             currentM = datetime.datetime.today().strftime("%-m")
                             listM = config.get(each, "solaronlymonths", fallback=0)
                             if currentM in listM:
                                 controller.switch(each, 0)
-                                aux.infohandler("Solar power under threshold " + str(watts/10) + "W, switch off " + each)
-                                aux.notifier("Solar power under threshold " + str(watts / 10) + "W, switch off " + each)
+                                aux.infohandler("Solar power forced and under threshold " + str(watts/10) + "W, switch off " + each)
+                                aux.notifier("Solar power forced and under threshold " + str(watts / 10) + "W, switch off " + each)
                             else:
-                                aux.infohandler("Solar power under threshold " + str(watts/10) + "W, but schedule is on " + each)
-                                aux.notifier("Solar power under threshold " + str(watts / 10) + "W, sbut schedule is on " + each)
+                                aux.infohandler("Solar power under threshold " + str(watts / 10) + "W, but schedule is on " + each)
+                                aux.notifier("Solar power under threshold " + str(watts / 10) + "W, but schedule is on " + each)
+                                controller.switch(each, 1)
+                        else:
+                            aux.infohandler("Solar power under threshold " + str(watts / 10) + "W, switch off " + each)
+                            aux.notifier("Solar power under threshold " + str(watts / 10) + "W, switch off " + each)
+                            controller.switch(each, 0)
                     else:
                         pass
                         #aux.infohandler("Solar power under threshold " + str(watts) + ", keeping on for " + str(solwattminon) + " minutes")
@@ -337,12 +357,12 @@ def start():
                 if currentchangeday == currentday:
                     aux.infohandler("Next schedule not found, but we are still in same day.")
                     aux.infohandler("Wait until new schedule is available")
-                    if now < crondate:
+                    if now < crondate and config.get("DEFAULT", "fetch", fallback="n") == "y":
                         wait = ((crondate - now).total_seconds())
                         infohandler("Autofetch event incoming, waiting for " + str(int(wait)) + " seconds.")
                     else:
                         wait = ((midnight - now).total_seconds())
-                        infohandler("Autofetch event passed, wait until midnight for "
+                        infohandler("Autofetch event passed or disabled, wait until midnight for "
                                     + str(int(wait)) + " seconds.")
                     time.sleep(wait)
                     errorcode = 23
@@ -383,7 +403,7 @@ def start():
                     init()  # Inner function
                 else:
                     try:
-                        f = open("data/last", "r")
+                        f = open("data/last", "r") #OK?
                         key = f.read()
                         f.close()
                     except:
@@ -425,7 +445,7 @@ def start():
                     else:
                         cron = cron + 1
                     aux.infohandler("Manual change on schedule was done, periodical reload skipped.")
-                elif float(lastitem) < time.time():  # If last manual change is gone already
+                elif float(lastitem + 3600) < time.time():  # If last manual change is gone already
                     aux.infohandler("Periodical schedule creation")
                     reload()
                     init()

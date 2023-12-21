@@ -28,8 +28,15 @@ try:
     ecountry = config["DEFAULT"]["ecountry"]
     tz = float(config["DEFAULT"]["timezone"])
     tax = float(config.get("DEFAULT", 'tax', fallback="0"))
+    daylight = config.get("DEFAULT", 'daylight', fallback="n")
 
-    tz = int(aux.settime(tz)[1])
+    if daylight == "y" or daylight == "Y":
+        is_dst = time.daylight and time.localtime().tm_isdst > 0
+        utc_offset = - (time.altzone if is_dst else time.timezone)
+        tz2 = utc_offset / 3600
+        if tz != tz2:
+            aux.infohandler("Daylight saving in use, timezone: " + str(tz2))
+            tz = tz2
 
 except Exception as e:
     aux.errorhandler("Hours: Config not found", e, 2)
@@ -132,7 +139,6 @@ def hoursJSON(day, hours, adj, device):
             table.append(tuplev)
     else:
         return "error"
-
     # Adding possible extra network cost per hour
     if config.get(device, 'networkoffset', fallback="n") == "y":
         tadd = []
@@ -149,7 +155,6 @@ def hoursJSON(day, hours, adj, device):
             else:
                 tadd.append((each[0], each[1]))
         table = tadd
-    #
 
     table2 = []
 
@@ -208,7 +213,6 @@ def hoursJSON(day, hours, adj, device):
 
     if adj == 1:  # Adjust expensive hours off
         if config.get(device, 'upperlimit', fallback="n") != "n":
-            # config[device]["upperlimit"] != "n":
             table2 = priceLimit(table2, device)
     table2.sort()
     return table2
@@ -409,5 +413,5 @@ def hours(day, hours, adj, device):
 
 
 if __name__ == '__main__':
-    print((ehours(1, 6, 0, "Volvo lataus")))
-    print((hoursJSON(1, 6, 0, "Volvo lataus")))
+    #print((ehours(1, 24, 0, "Estä lämpö")))
+    print((hoursJSON(1, 24, 0, "Estä lämpö")))

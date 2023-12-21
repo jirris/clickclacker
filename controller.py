@@ -2,6 +2,7 @@ import configparser
 import os
 import aux
 import subprocess
+debug = 0
 
 config = configparser.ConfigParser()
 
@@ -42,11 +43,21 @@ def switch(devices, value):
                     continue
                 if device == devices and value == 1:
                     delay = config.get(device, 'delay', fallback="0")
+                    away = config.get(device, 'away', fallback="n")
                     #subprocess.Popen("sleep " + delay + ";" + config[device]["on"], shell=True)
-                    subprocess.Popen("nohup sh -c \'" + "sleep " + delay + ";" + config[device]["on"] + "\' > " +
+                    if away == "y":
+                        subprocess.Popen("nohup sh -c \'" + "sleep " + delay + ";" + config[device]["off"] + "\' > " +
+                                         "log/command.log" + " 2>&1 " + "&", shell=True)
+                        aux.infohandler("Controller: Away mode on, setting device to off.")
+                    else:
+                        subprocess.Popen("nohup sh -c \'" + "sleep " + delay + ";" + config[device]["on"] + "\' > " +
                                                 "log/command.log" + " 2>&1 " + "&", shell=True)
+                        if debug == 1:
+                            aux.notifier("Device " + device + " ON")
                 elif device == devices and value == 0:
                     delay = config.get(device, 'delay', fallback="0")
+                    if debug == 1:
+                        aux.notifier("Device " + device + " OFF")
                     #subprocess.Popen("sleep " + delay + ";" + config[device]["off"], shell=True)
                     subprocess.Popen("nohup sh -c \'" + "sleep " + delay + ";" + config[device]["off"] + "\' > " +
                                                 "log/command.log" + " 2>&1 " + "&", shell=True)

@@ -7,7 +7,7 @@ import json
 import sys, argparse, os
 
 areas = ['FI']  # Configure areas to get prices, see Nordpool webpages API description
-tax = 1.1 # Tax percentage multiplier (1.1 = 10%)
+tax = 1.24 # Tax percentage multiplier (1.1 = 10%)
 
 abspath = os.path.abspath(__file__)
 dname = os.path.dirname(abspath)

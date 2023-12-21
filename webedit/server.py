@@ -14,13 +14,12 @@ os.chdir(dname)
 
 sys.path.append("..")
 import publish
-from aux import messagehandler, sendhtml, errorhandler
+from aux import messagehandler, sendhtml, errorhandler, settime
 # Edit these:
 port = 5050
 bindIP = "0.0.0.0"
 users = {
-    "john": generate_password_hash("hello"),
-    "susan": generate_password_hash("bye")
+    "click": generate_password_hash("clack"),
 }
 
 ###
@@ -33,7 +32,10 @@ config = configparser.ConfigParser()
 # Read config for various defaults
 try:
     config.read('conf/devices.conf')
-    tz = (int(config["DEFAULT"]["timezone"]))
+    tz = (float(config["DEFAULT"]["timezone"]))
+    daylight = config.get("DEFAULT", 'daylight', fallback="n")
+    if daylight == "y" or daylight == "Y":
+        tz = tz + int(time.daylight)
 except Exception as e:
     errorhandler("Config not found", e, 1)
     exit()
@@ -79,10 +81,10 @@ def home():
                     for key in updatedict:
                         if key not in oldsch:
                             newkey.append(key)
-                            print("new item")
+                            #print("Cannot change setting outside prices")
                         else:
                             if updatedict[key] != oldsch[key]:
-                                print("content change")
+                                print("Content change")
                                 newkey.append(key)
 
                     for key in oldsch:
@@ -147,8 +149,8 @@ def home():
                 messagehandler(hrsched)
             return render_template("web.html")
 
-        if request.form.get('action').upper() == 'RESET':
-            print("Reload")
+        if request.form.get('action').upper() == 'REGENERATE':
+            print("Regenerate")
             ti_m = int(os.path.getctime('webedit/templates/web.html'))
             os.system('python3 schedulecreator.py')
             # Check if schedule has been updated

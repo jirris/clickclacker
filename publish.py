@@ -26,17 +26,14 @@ def settingspage():
 
     for each in config:
         html = html + "<tr><td colspan=\"2\"><br/></td></tr><th colspan=\"2\"><u><b>" + each + "</b></u></th>\n"
-        print(str(each))
         for set in config[each]:
             try:
                 if config["DEFAULT"][set] != config[each][set]:
                     html = html + "<tr><td>" + str(set) + "</td><td><input size=\"50\" type=\"text\" id=\"" + str(each + "." + set) + "\" name=\"" + str(each + "." + set) + "\" value=\"" + str(config[each][set]) + "\"/></td></tr>\n"
-                    print(set + ": " + config[each][set])
                 else:
                     if each == "DEFAULT":
                         html = html + "<tr><td>" + str(set) + "</td><td><input size=\"50\" type=\"text\" id=\"" + str(each + "." + set) + "\" name=\"" + str(each + "." + set) + "\" value=\"" + str(config[each][set]) + "\"/></td></tr>\n"
             except:
-                print(set + ": " + config[each][set])
                 html = html + "<tr><td>" + str(set) + "</td><td><input size=\"50\" type=\"text\" id=\"" + str(each + "." + set) + "\" name=\"" + str(each + "." + set) + "\" value=\"" + str(config[each][set]) + "\"/></td></tr>\n"
 
     html = html + "</table><br/><input name=\"action\" type=\"submit\" value=\"SAVE\"></form></body></html>"
@@ -54,7 +51,8 @@ def settingspage():
 def webpage2(table):
     columns = int((len(table[0]) - 1) / 2 + 1)  # Remove header and add one per table
     rows = len(table)
-    if rows == 0 or columns < 24:
+    if rows == 0 or columns < 13:
+        aux.errorhandler("Webpage cannot be created due lack of data", "none", 0)
         return 1
 
     # read CSS
@@ -70,12 +68,13 @@ def webpage2(table):
     cellnr = -1
     firstrow = []
     counter = 24
-    nextday = ""
+    nextday = "Not set"
 
     # Create header row and pickup dates
     for cell in table[0]:
         if counter == 0:
-            nextday = (cell[8:10] + '.' + cell[5:7] + "." + cell[:4])
+            if cell != "-":
+                nextday = (cell[8:10] + '.' + cell[5:7] + "." + cell[:4])
             break
         cellnr = cellnr + 1
         dat = cell[:10]
@@ -123,7 +122,8 @@ def webpage2(table):
             continue
         hour = 0
         s = ""
-        counter = 25
+        counter = columns
+        #counter = 25
 
         for cell in row:
             counter = counter - 1
@@ -152,50 +152,51 @@ def webpage2(table):
 
     # Block
     counter = 25
+    counter = columns
     first = 0
-
-    while counter != 0:
-        if first == 0:
-            html = html + "<div class=\"date\">" + nextday + "</div>\n"
-            first = 1
-        else:
-            html = html + "<div class=\"div" + str(divnr) + "\"></div>\n"
-        counter = counter - 1
-        divnr = divnr + 1
-
-    rownr = 0
-
-    # Second table
-    for row in table:
-        if rownr == 0:
-            rownr = rownr + 1
-            continue
-
-        hour = 25
-        counter = 24
-        html = html + '<div class=\"devices\">' + row[0] + ' </div>\n'
-        for cell in row[25:]:
+    if nextday != "Not set":
+        while counter != 0:
+            if first == 0:
+                html = html + "<div class=\"date\">" + nextday + "</div>\n"
+                first = 1
+            else:
+                html = html + "<div class=\"div" + str(divnr) + "\"></div>\n"
             counter = counter - 1
-            s = table[0][hour]
-            s = time.mktime(datetime.strptime(s, "%Y-%m-%d %H:%M").timetuple())  # 2023-03-01 08:00
-            s = str(int(s)) + "_" + row[0]
-            if "off " in cell:
-                price = cell.split(" ")[1]
-                html = html + '<div class=\"div' + str(divnr) + '\">' \
-                    '<label class=\"switch switch-yes-no\"><input class=\"switch-input\" ' \
-                    'type=\"checkbox\" name=\"' + s + '\"/>' \
-                    '<span class=\"switch-handle\"></span><span class=\"switch-label\" data-on=\"' + price + '\" data-off=\"' + price + '\"></span> ' \
-                    '</label></div>\n'
-            elif "on " in cell:
-                price = cell.split(" ")[1]
-                html = html + '<div class=\"div' + str(divnr) + '\">' \
-                    '<label class=\"switch switch-yes-no\"><input class=\"switch-input\" ' \
-                    'type=\"checkbox\" name=\"' + s + '\" checked/>' \
-                    '<span class=\"switch-handle\"></span><span class=\"switch-label\" data-on=\"' + price + '\" data-off=\"' + price + '\"></span> ' \
-                    '</label></div>\n'
-
             divnr = divnr + 1
-            hour = hour + 1
+
+        rownr = 0
+
+        # Second table
+        for row in table:
+            if rownr == 0:
+                rownr = rownr + 1
+                continue
+
+            hour = 25
+            counter = 24
+            html = html + '<div class=\"devices\">' + row[0] + ' </div>\n'
+            for cell in row[25:]:
+                counter = counter - 1
+                s = table[0][hour]
+                s = time.mktime(datetime.strptime(s, "%Y-%m-%d %H:%M").timetuple())  # 2023-03-01 08:00
+                s = str(int(s)) + "_" + row[0]
+                if "off " in cell:
+                    price = cell.split(" ")[1]
+                    html = html + '<div class=\"div' + str(divnr) + '\">' \
+                        '<label class=\"switch switch-yes-no\"><input class=\"switch-input\" ' \
+                        'type=\"checkbox\" name=\"' + s + '\"/>' \
+                        '<span class=\"switch-handle\"></span><span class=\"switch-label\" data-on=\"' + price + '\" data-off=\"' + price + '\"></span> ' \
+                        '</label></div>\n'
+                elif "on " in cell:
+                    price = cell.split(" ")[1]
+                    html = html + '<div class=\"div' + str(divnr) + '\">' \
+                        '<label class=\"switch switch-yes-no\"><input class=\"switch-input\" ' \
+                        'type=\"checkbox\" name=\"' + s + '\" checked/>' \
+                        '<span class=\"switch-handle\"></span><span class=\"switch-label\" data-on=\"' + price + '\" data-off=\"' + price + '\"></span> ' \
+                        '</label></div>\n'
+
+                divnr = divnr + 1
+                hour = hour + 1
 
     config = configparser.ConfigParser()
     try:
@@ -215,11 +216,11 @@ def webpage2(table):
 
     if len(soldevices) > 1:
         html = html + '</div><br/><b>Devices: ' + soldevices[1:] + ' overrided with sun power.</b><br>\n<input style=\"background-color: #32B532;\" type=\"submit\" value=\"Save\" name=\"action\">' \
-                      '<br><input style=\"background-color: #F7CA00;\" type=\"submit\" value=\"Reset\" name=\"action\"/>\n</form>\n' \
+                      '<br><input style=\"background-color: #F7CA00;\" type=\"submit\" value=\"Regenerate\" name=\"action\"/>\n</form>\n' \
                       '<form><input type=\"submit\" name=\"reload\" value=\"Reload\"></form></body>\n</html>'
     else:
         html = html + '</div><br>\n<input style=\"background-color: #32B532;\" type=\"submit\" value=\"Save\" name=\"action\">' \
-                      '<br><input style=\"background-color: #F7CA00;\" type=\"submit\" value=\"Reset\" name=\"action\"/>\n</form>\n' \
+                      '<br><input style=\"background-color: #F7CA00;\" type=\"submit\" value=\"Regenerate\" name=\"action\"/>\n</form>\n' \
                       '<form><input type=\"submit\" name=\"reload\" value=\"Reload\"></form></body>\n</html>'
     try:
         f = open("webedit/templates/web.html", "w")
@@ -246,7 +247,10 @@ def htmlcreator(table):
             if tablecount == 1:
                 html = html + '<th>' + cell[10:13] + '</th>'
             elif tablecount == 2:
-                html2 = html2 + '<th>' + cell[10:13] + '</th>'
+                if cell == "-":
+                    html2 = html2 + '<th>' + cell + '</th>'
+                else:
+                    html2 = html2 + '<th>' + cell[10:13] + '</th>'
         else:
             if tablecount == 0:
                 html = html + '<th>' + cell[8:10] + '.' + cell[5:7] + cell[10:] + '</th>'
@@ -272,7 +276,7 @@ def htmlcreator(table):
             if cnr == 26:
                 html = html + content + "</tr>" + '\n'
                 content = ""
-            if "off " in cell:
+            if "off " in cell or "NA " in cell:
                 content = content + '<td>' + cell + '</td>'
             elif "on " in cell:
                 content = content + '<td bgcolor=\"green\">' + cell + '</td>'
@@ -358,7 +362,6 @@ def csvcreator(schedule1, pricelist):
             for tuplev in sorted_prices:
                 if tuplev[0] == hour:
                     price = tuplev[1]
-
             device_states.append(state + " " + str(price))
         table.append(device_states)
 
@@ -395,6 +398,11 @@ def csvcreator(schedule1, pricelist):
         except Exception as e:
             aux.errorhandler("CSV/HTML history write failed", e, 1)
 
+    if len(table[0]) != 49:
+        tlen = len(table[0])
+        while tlen != 49:
+            table[0].append("-")
+            tlen = tlen + 1
     webpage2(table)
     htmlcreator(table)
 
@@ -409,4 +417,5 @@ def csvcreator(schedule1, pricelist):
         return 0
 
 if __name__ == '__main__':
-    settingspage()
+    pass
+    #settingspage()

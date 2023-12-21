@@ -198,6 +198,8 @@ def main():
             errorhandler("Schedulecreator, script to run not found", command, 1)
         else:
             os.system(command)
+    else:
+        infohandler("Autofetch disabled in settings")
 
     for device in config:
         if device == "DEFAULT":
@@ -360,7 +362,15 @@ def main():
     dkeys.sort()
     temp_schedule = {i: schedule1[i] for i in dkeys}
 
-    for key in temp_schedule:   # This moments settings
+    # Remove statics if there is no price information
+    clear_schedule = {}
+    test = dict(pricelist)
+
+    for each in temp_schedule:
+        if each in test:
+            clear_schedule[each] = temp_schedule[each]
+
+    for key in clear_schedule:   # This moments settings
         t = datetime.fromtimestamp(key)
         t = t.strftime('%Y-%m-%d %H:%M:%S %Z')
         for each in pricelist:
@@ -369,10 +379,10 @@ def main():
                 break
             else:
                 price = "Unknown"
-        if str(temp_schedule[key]):
-            hrsched = hrsched + (str(t) + "--> ON:\t" + str(temp_schedule[key]) + "  Price: " + str(price) + "\n")
+        if str(clear_schedule[key]):
+            hrsched = hrsched + (str(t) + "--> ON:\t" + str(clear_schedule[key]) + "  Price: " + str(price) + "\n")
 
-    publish.csvcreator(temp_schedule, pricelist)
+    publish.csvcreator(clear_schedule, pricelist)
 
     if config.get('DEFAULT', 'html', fallback="n") == "y":
         sendhtml()
@@ -386,7 +396,7 @@ def main():
         if os.path.exists('data/prices.pkl'):
             os.remove('data/prices.pkl')
         with open('data/schedule1.pkl', 'wb') as f:  # Full schedule
-            pickle.dump(temp_schedule, f)
+            pickle.dump(clear_schedule, f)
             f.close()
             f = open("data/origin", "w")
             if emptyschedule != 0:
